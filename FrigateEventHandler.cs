@@ -1,4 +1,5 @@
-﻿using MQTTnet.Extensions.ManagedClient;
+﻿using Microsoft.Extensions.Logging;
+using MQTTnet.Extensions.ManagedClient;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,10 +15,14 @@ public interface IFrigateEventHandler
 
 public class FrigateEventHandler : IFrigateEventHandler
 {
-    private IManagedMqttClient managedMqttClient;
-    public FrigateEventHandler(IManagedMqttClient managedMqttClient)
+    private readonly ILogger<FrigateEventHandler> logger;
+    private readonly IManagedMqttClient managedMqttClient;
+    private readonly IConfigurationService configurationService;
+    public FrigateEventHandler(ILogger<FrigateEventHandler> logger, IManagedMqttClient managedMqttClient, IConfigurationService configurationService)
     {
+        this.logger = logger;
         this.managedMqttClient = managedMqttClient;
+        this.configurationService = configurationService;
     }
 
     public async void HandleEvents(string message)
@@ -25,19 +30,38 @@ public class FrigateEventHandler : IFrigateEventHandler
         try
         {
             var frigateEvent = JsonSerializer.Deserialize<FrigateEvent>(message);
-
-            if (frigateEvent?.type == "new")
+            if(frigateEvent == null)
             {
-                await managedMqttClient.EnqueueAsync("frigate/new-events", message);
+                logger.LogError("message JSON was empty");
+                return;
             }
-            else if (frigateEvent?.type == "end")
+
+            logger.LogInformation("{Type} - {Camera} - {DateTime}", frigateEvent.type, frigateEvent.before?.camera, DateTime.Now);
+
+            if (frigateEvent.type == "new")
             {
-                await managedMqttClient.EnqueueAsync("frigate/end-events", message);
+                //await managedMqttClient.EnqueueAsync("frigate/events/new", message);
+
+                if(frigateEvent.before?.label == "car")
+                {
+                    await managedMqttClient.EnqueueAsync("frigate/events/new/car", message);
+                }
+            }
+            else if (frigateEvent.type == "end")
+            {
+                //await managedMqttClient.EnqueueAsync("frigate/events/end", message);
+
+                if (configurationService.Configuration?.OutdoorCameras != null && configurationService.Configuration.OutdoorCameras.Contains(frigateEvent.before?.camera))
+                {
+                    await managedMqttClient.EnqueueAsync("frigate/events/end/outdoor", message);
+                }
             }
         }
         catch
         {
-            Console.WriteLine("ERROR: message not in JSON format.");
+            logger.LogError("message not in JSON format.");
         }
     }
+
+
 }

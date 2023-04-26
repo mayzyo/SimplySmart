@@ -3,8 +3,8 @@
     "SimpleFrigateSorter": {
       "commandName": "Project",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "MQTT_URL": "192.168.50.132"
+        "MQTT_URL": "192.168.50.132",
+        "CONFIG_FILE_PATH": "E:\\Projects\\SimpleFrigateSorter\\config.json"
       }
     },
     "Docker": {

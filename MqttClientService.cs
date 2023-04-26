@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.VisualBasic;
 using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Extensions.ManagedClient;
@@ -61,7 +62,7 @@ public class MqttClientService : IHostedService
         {
             var topics = new List<MqttTopicFilter>
             {
-                new MqttTopicFilterBuilder().WithTopic("frigate/test").Build()
+                new MqttTopicFilterBuilder().WithTopic("frigate/events").Build()
             };
 
             await managedMqttClient.SubscribeAsync(topics);
