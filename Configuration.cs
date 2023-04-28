@@ -9,4 +9,5 @@ namespace SimpleFrigateSorter;
 public class Configuration
 {
     public IEnumerable<string>? OutdoorCameras { get; set; }
+    public bool IsHome { get; set; }
 }

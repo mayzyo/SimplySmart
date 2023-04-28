@@ -24,6 +24,7 @@ Host.CreateDefaultBuilder(args)
         services.AddSingleton<IConfigurationService, ConfigurationService>();
         services.AddHostedService<MqttClientService>();
         services.AddTransient<IFrigateEventHandler, FrigateEventHandler>();
+        services.AddTransient<IFrigateConfigHandler, FrigateConfigHandler>();
     })
     .Build()
     .Run();

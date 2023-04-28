@@ -10,7 +10,7 @@ namespace SimpleFrigateSorter;
 
 public interface IFrigateEventHandler
 {
-    void HandleEvents(string message);
+    void HandleEvent(string message);
 }
 
 public class FrigateEventHandler : IFrigateEventHandler
@@ -25,7 +25,7 @@ public class FrigateEventHandler : IFrigateEventHandler
         this.configurationService = configurationService;
     }
 
-    public async void HandleEvents(string message)
+    public async void HandleEvent(string message)
     {
         try
         {
@@ -44,16 +44,18 @@ public class FrigateEventHandler : IFrigateEventHandler
 
                 if(frigateEvent.before?.label == "car")
                 {
-                    await managedMqttClient.EnqueueAsync("frigate/events/new/car", message);
+                    await managedMqttClient.EnqueueAsync("frigate/events/car", message);
                 }
             }
             else if (frigateEvent.type == "end")
             {
                 //await managedMqttClient.EnqueueAsync("frigate/events/end", message);
-
-                if (configurationService.Configuration?.OutdoorCameras != null && configurationService.Configuration.OutdoorCameras.Contains(frigateEvent.before?.camera))
+                if(configurationService.Configuration?.IsHome != true)
                 {
-                    await managedMqttClient.EnqueueAsync("frigate/events/end/outdoor", message);
+                    await managedMqttClient.EnqueueAsync("frigate/events/alarm", message);
+                } else if (configurationService.Configuration?.OutdoorCameras != null && configurationService.Configuration.OutdoorCameras.Contains(frigateEvent.before?.camera))
+                {
+                    await managedMqttClient.EnqueueAsync("frigate/events/outdoor", message);
                 }
             }
         }

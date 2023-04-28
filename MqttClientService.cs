@@ -2,7 +2,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualBasic;
 using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Extensions.ManagedClient;
@@ -20,8 +19,9 @@ public class MqttClientService : IHostedService
     private readonly IServiceProvider serviceProvider;
     private readonly IManagedMqttClient managedMqttClient;
 
-    public MqttClientService(ILogger<MqttClientService> logger, IServiceProvider serviceProvider, IManagedMqttClient managedMqttClient)
+    public MqttClientService(ILogger<MqttClientService> logger, IServiceProvider serviceProvider, IManagedMqttClient managedMqttClient, IConfigurationService config)
     {
+        Console.WriteLine(config.Configuration);
         this.logger = logger;
         this.serviceProvider = serviceProvider;
         this.managedMqttClient = managedMqttClient;
@@ -29,16 +29,7 @@ public class MqttClientService : IHostedService
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        using var scope = serviceProvider.CreateScope();
-
-        managedMqttClient.ApplicationMessageReceivedAsync += async (e) =>
-        {
-            var message = e.ApplicationMessage.ConvertPayloadToString();
-            using var scope = serviceProvider.CreateScope();
-
-            var frigateEventHandler = scope.ServiceProvider.GetRequiredService<IFrigateEventHandler>();
-            frigateEventHandler.HandleEvents(message);
-        };
+        managedMqttClient.ApplicationMessageReceivedAsync += SetupApplicationMessageHandlers;
 
         var mqttClientOptions = new MqttClientOptionsBuilder()
             .WithTcpServer(Environment.GetEnvironmentVariable("MQTT_URL"))
@@ -62,7 +53,8 @@ public class MqttClientService : IHostedService
         {
             var topics = new List<MqttTopicFilter>
             {
-                new MqttTopicFilterBuilder().WithTopic("frigate/events").Build()
+                new MqttTopicFilterBuilder().WithTopic("frigate/events").Build(),
+                new MqttTopicFilterBuilder().WithTopic("frigate/config").Build()
             };
 
             await managedMqttClient.SubscribeAsync(topics);
@@ -81,7 +73,25 @@ public class MqttClientService : IHostedService
         logger.LogInformation("MQTT client stopped");
     }
 
-    private MqttClientCredentials GetCredentials()
+    private async Task SetupApplicationMessageHandlers(MqttApplicationMessageReceivedEventArgs e)
+    {
+        var topic = e.ApplicationMessage.Topic;
+        var message = e.ApplicationMessage.ConvertPayloadToString();
+        using var scope = serviceProvider.CreateScope();
+
+        if (topic == "frigate/events")
+        {
+            var frigateEventHandler = scope.ServiceProvider.GetRequiredService<IFrigateEventHandler>();
+            frigateEventHandler.HandleEvent(message);
+        }
+        else if (topic == "frigate/config")
+        {
+            var frigateConfigHandler = scope.ServiceProvider.GetRequiredService<IFrigateConfigHandler>();
+            frigateConfigHandler.HandleEvent(message);
+        }
+    }
+
+    private static MqttClientCredentials GetCredentials()
     {
         var username = Environment.GetEnvironmentVariable("MQTT_USERNAME");
         var password = Environment.GetEnvironmentVariable("MQTT_PASSWORD");
