@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using MQTTnet;
 using MQTTnet.Client;
-using SimpleFrigateSorter.States;
+using SimplySmart.States;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +9,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace SimpleFrigateSorter.Nodemation;
+namespace SimplySmart.Nodemation;
 
 public interface INodemationDaylightHandler
 {

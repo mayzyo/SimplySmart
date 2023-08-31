@@ -4,11 +4,11 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MQTTnet;
 using MQTTnet.Extensions.ManagedClient;
-using SimpleFrigateSorter.Core;
-using SimpleFrigateSorter.Frigate;
-using SimpleFrigateSorter.Nodemation;
-using SimpleFrigateSorter.States;
-using SimpleFrigateSorter.Zwave;
+using SimplySmart.Core;
+using SimplySmart.Frigate;
+using SimplySmart.Nodemation;
+using SimplySmart.States;
+using SimplySmart.Zwave;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 

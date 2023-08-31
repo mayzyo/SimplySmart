@@ -1,4 +1,4 @@
-﻿namespace SimpleFrigateSorter.HomeKit;
+﻿namespace SimplySmart.HomeKit;
 
 public enum TargetState
 {

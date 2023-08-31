@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using System.Timers;
 using Timer = System.Timers.Timer;
 
-namespace SimpleFrigateSorter.States;
+namespace SimplySmart.States;
 
 public interface ILightSwitch
 {

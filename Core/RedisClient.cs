@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SimpleFrigateSorter.Core;
+namespace SimplySmart.Core;
 
 public interface IRedisClient
 {

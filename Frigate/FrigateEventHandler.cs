@@ -2,7 +2,7 @@
 using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Extensions.ManagedClient;
-using SimpleFrigateSorter.Utils;
+using SimplySmart.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +10,7 @@ using System.Text;
 using System.Text.Json;
 using YamlDotNet.Serialization;
 
-namespace SimpleFrigateSorter.Frigate;
+namespace SimplySmart.Frigate;
 
 public interface IFrigateEventHandler
 {

@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using SimpleFrigateSorter.Frigate;
-using SimpleFrigateSorter.Utils;
-using SimpleFrigateSorter.Zwave;
+using SimplySmart.Frigate;
+using SimplySmart.Utils;
+using SimplySmart.Zwave;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using YamlDotNet.Serialization;
 
-namespace SimpleFrigateSorter.States;
+namespace SimplySmart.States;
 
 public interface ILightSwitchManager
 {

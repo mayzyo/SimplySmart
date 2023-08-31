@@ -6,11 +6,11 @@ using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Extensions.ManagedClient;
 using MQTTnet.Packets;
-using SimpleFrigateSorter.Frigate;
-using SimpleFrigateSorter.Nodemation;
+using SimplySmart.Frigate;
+using SimplySmart.Nodemation;
 using System.Text;
 
-namespace SimpleFrigateSorter.Core;
+namespace SimplySmart.Core;
 
 public class MqttService : IHostedService
 {

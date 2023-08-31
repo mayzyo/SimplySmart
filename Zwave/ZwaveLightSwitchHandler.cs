@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 
-namespace SimpleFrigateSorter.Zwave;
+namespace SimplySmart.Zwave;
 
 public interface IZwaveLightSwitchHandler
 {

@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using System.Timers;
 using Timer = System.Timers.Timer;
 
-namespace SimpleFrigateSorter.Zwave;
+namespace SimplySmart.Zwave;
 
 public class ZwaveStates
 {

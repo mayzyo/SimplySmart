@@ -5,16 +5,16 @@ WORKDIR /app
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
-COPY ["SimpleFrigateSorter.csproj", "."]
-RUN dotnet restore "./SimpleFrigateSorter.csproj"
+COPY ["SimplySmart.csproj", "."]
+RUN dotnet restore "./SimplySmart.csproj"
 COPY . .
 WORKDIR "/src/."
-RUN dotnet build "SimpleFrigateSorter.csproj" -c Release -o /app/build
+RUN dotnet build "SimplySmart.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "SimpleFrigateSorter.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "SimplySmart.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "SimpleFrigateSorter.dll"]
+ENTRYPOINT ["dotnet", "SimplySmart.dll"]

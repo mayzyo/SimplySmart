@@ -1,13 +1,13 @@
-﻿using SimpleFrigateSorter.Core;
+﻿using SimplySmart.Core;
 using Stateless;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static SimpleFrigateSorter.Security.Surveillance;
+using static SimplySmart.Security.Surveillance;
 
-namespace SimpleFrigateSorter.Security;
+namespace SimplySmart.Security;
 
 public interface ISurveillance
 {

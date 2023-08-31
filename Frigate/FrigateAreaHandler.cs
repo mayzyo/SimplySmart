@@ -1,11 +1,11 @@
 ﻿using Microsoft.Extensions.Logging;
 using MQTTnet;
 using MQTTnet.Client;
-using SimpleFrigateSorter.States;
+using SimplySmart.States;
 using System;
 using System.Collections.Generic;
 
-namespace SimpleFrigateSorter.Frigate;
+namespace SimplySmart.Frigate;
 
 public interface IFrigateAreaHandler
 {

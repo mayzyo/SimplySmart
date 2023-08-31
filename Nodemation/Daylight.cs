@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SimpleFrigateSorter.Nodemation;
+namespace SimplySmart.Nodemation;
 
 internal class Daylight
 {

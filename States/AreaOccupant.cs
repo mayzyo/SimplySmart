@@ -5,9 +5,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static SimpleFrigateSorter.States.AreaOccupant;
+using static SimplySmart.States.AreaOccupant;
 
-namespace SimpleFrigateSorter.States;
+namespace SimplySmart.States;
 
 public interface IAreaOccupant
 {
