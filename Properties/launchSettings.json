@@ -4,7 +4,7 @@
       "commandName": "Project",
       "environmentVariables": {
         "MQTT_URL": "192.168.50.132",
-        "CONFIG_FILE_PATH": "E:\\Projects\\SimpleFrigateSorter\\config.json",
+        "CONFIG_FILE_PATH": "E:\\Projects\\SimpleFrigateSorter\\config.yaml",
         "REDIS_URL": "172.22.4.13:6379",
         "REDIS_DATABASE": "0"
       }

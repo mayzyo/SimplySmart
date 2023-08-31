@@ -363,3 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 
 config.json
+config.yaml

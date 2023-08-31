@@ -6,22 +6,20 @@ using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Extensions.ManagedClient;
 using MQTTnet.Packets;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using SimpleFrigateSorter.Frigate;
+using SimpleFrigateSorter.Nodemation;
 using System.Text;
 
-namespace SimpleFrigateSorter;
+namespace SimpleFrigateSorter.Core;
 
-public class MqttClientService : IHostedService
+public class MqttService : IHostedService
 {
-    private readonly ILogger<MqttClientService> logger;
-    private readonly IServiceProvider serviceProvider;
+    private readonly ILogger<MqttService> logger;
     private readonly IManagedMqttClient managedMqttClient;
+    private readonly IServiceProvider serviceProvider;
 
-    public MqttClientService(ILogger<MqttClientService> logger, IServiceProvider serviceProvider, IManagedMqttClient managedMqttClient, IConfigurationService config)
+    public MqttService(ILogger<MqttService> logger, IServiceProvider serviceProvider, IManagedMqttClient managedMqttClient)
     {
-        Console.WriteLine(config.Configuration);
         this.logger = logger;
         this.serviceProvider = serviceProvider;
         this.managedMqttClient = managedMqttClient;
@@ -29,7 +27,7 @@ public class MqttClientService : IHostedService
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        managedMqttClient.ApplicationMessageReceivedAsync += SetupApplicationMessageHandlers;
+        var topics = AssignTopicHandlers();
 
         var mqttClientOptions = new MqttClientOptionsBuilder()
             .WithTcpServer(Environment.GetEnvironmentVariable("MQTT_URL"))
@@ -51,12 +49,6 @@ public class MqttClientService : IHostedService
 
         try
         {
-            var topics = new List<MqttTopicFilter>
-            {
-                new MqttTopicFilterBuilder().WithTopic("frigate/events").Build(),
-                new MqttTopicFilterBuilder().WithTopic("frigate/config").Build()
-            };
-
             await managedMqttClient.SubscribeAsync(topics);
         }
         catch (Exception ex)
@@ -73,21 +65,40 @@ public class MqttClientService : IHostedService
         logger.LogInformation("MQTT client stopped");
     }
 
-    private async Task SetupApplicationMessageHandlers(MqttApplicationMessageReceivedEventArgs e)
+    private List<MqttTopicFilter> AssignTopicHandlers()
+    {
+        var topics = new List<MqttTopicFilter>
+        {
+            new MqttTopicFilterBuilder().WithTopic("frigate/events").Build(),
+            new MqttTopicFilterBuilder().WithTopic("frigate/+/person").Build(),
+            new MqttTopicFilterBuilder().WithTopic("nodemation/daylight").Build(),
+        };
+        managedMqttClient.ApplicationMessageReceivedAsync += CreateScopedMessageReceived;
+
+        return topics;
+    }
+
+    private async Task CreateScopedMessageReceived(MqttApplicationMessageReceivedEventArgs e)
     {
         var topic = e.ApplicationMessage.Topic;
-        var message = e.ApplicationMessage.ConvertPayloadToString();
         using var scope = serviceProvider.CreateScope();
 
-        if (topic == "frigate/events")
+        if (MqttTopicFilterComparer.Compare(topic, "frigate/events") == MqttTopicFilterCompareResult.IsMatch)
         {
-            var frigateEventHandler = scope.ServiceProvider.GetRequiredService<IFrigateEventHandler>();
-            frigateEventHandler.HandleEvent(message);
+            IFrigateEventHandler handler = scope.ServiceProvider.GetRequiredService<IFrigateEventHandler>();
+            await handler.HandleEvent(e);
         }
-        else if (topic == "frigate/config")
+
+        if (MqttTopicFilterComparer.Compare(topic, "frigate/+/person") == MqttTopicFilterCompareResult.IsMatch)
         {
-            var frigateConfigHandler = scope.ServiceProvider.GetRequiredService<IFrigateConfigHandler>();
-            frigateConfigHandler.HandleEvent(message);
+            IFrigateAreaHandler handler = scope.ServiceProvider.GetRequiredService<IFrigateAreaHandler>();
+            await handler.HandleEvent(e);
+        }
+
+        if (MqttTopicFilterComparer.Compare(topic, "nodemation/daylight") == MqttTopicFilterCompareResult.IsMatch)
+        {
+            INodemationDaylightHandler handler = scope.ServiceProvider.GetRequiredService<INodemationDaylightHandler>();
+            await handler.HandleEvent(e);
         }
     }
 

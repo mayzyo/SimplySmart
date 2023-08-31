@@ -1,11 +1,18 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MQTTnet;
 using MQTTnet.Extensions.ManagedClient;
-using SimpleFrigateSorter;
+using SimpleFrigateSorter.Core;
+using SimpleFrigateSorter.Frigate;
+using SimpleFrigateSorter.Nodemation;
+using SimpleFrigateSorter.States;
+using SimpleFrigateSorter.Zwave;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 
-Console.WriteLine("Simple Frigate Sorter - Welcome");
+Console.WriteLine("Simply Smart - Welcome");
 
 Host.CreateDefaultBuilder(args)
     .ConfigureLogging(logging =>
@@ -14,6 +21,10 @@ Host.CreateDefaultBuilder(args)
         logging.SetMinimumLevel(LogLevel.Debug);
 #endif
     })
+    .ConfigureAppConfiguration(builder =>
+    {
+        builder.AddEnvironmentVariables();
+    })
     .ConfigureServices(services =>
     {
         services.AddSingleton(sp =>
@@ -21,10 +32,19 @@ Host.CreateDefaultBuilder(args)
             var mqttFactory = new MqttFactory();
             return mqttFactory.CreateManagedMqttClient();
         });
-        services.AddSingleton<IConfigurationService, ConfigurationService>();
-        services.AddHostedService<MqttClientService>();
+        services.AddHostedService<MqttService>();
+
+        var deserializer = new DeserializerBuilder()
+            .WithNamingConvention(CamelCaseNamingConvention.Instance)
+            .Build();
+        services.AddSingleton(deserializer);
+        services.AddSingleton<ILightSwitchManager, LightSwitchManager>();
+        services.AddSingleton<IAreaOccupantManager, AreaOccupantManager>();
+
         services.AddTransient<IFrigateEventHandler, FrigateEventHandler>();
-        services.AddTransient<IFrigateConfigHandler, FrigateConfigHandler>();
+        services.AddTransient<IFrigateAreaHandler, FrigateAreaHandler>();
+        services.AddTransient<INodemationDaylightHandler, NodemationDaylightHandler>();
+        services.AddTransient<IZwaveLightSwitchHandler, ZwaveLightSwitchHandler>();
     })
     .Build()
     .Run();

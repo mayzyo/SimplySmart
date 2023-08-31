@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SimpleFrigateSorter;
+namespace SimpleFrigateSorter.Frigate;
 
 public class FrigateEvent
 {
@@ -32,8 +32,17 @@ public class FrigateEventDetail
     public uint area { get; set; } //12874
     public float ratio { get; set; } //1.9146341463414633
     public IEnumerable<uint>? region { get; set; } //[14, 160, 334, 480]
+    /// <summary>
+    /// Whether or not the object is considered stationary.
+    /// </summary>
     public bool stationary { get; set; }
+    /// <summary>
+    /// Number of frames the object has been motionless.
+    /// </summary>
     public uint motionless_count { get; set; } //0
+    /// <summary>
+    /// Number of times the object has moved from a stationary position.
+    /// </summary>
     public uint position_changes { get; set; } //1
     public IEnumerable<string>? current_zones { get; set; } //["shack"]
     public IEnumerable<string>? entered_zones { get; set; } //["laundry", "shack"]

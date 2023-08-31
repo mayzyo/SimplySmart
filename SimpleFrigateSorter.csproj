@@ -17,6 +17,8 @@
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.17.2" />
     <PackageReference Include="MQTTnet.Extensions.ManagedClient" Version="4.2.0.706" />
     <PackageReference Include="StackExchange.Redis" Version="2.6.104" />
+    <PackageReference Include="Stateless" Version="5.13.0" />
+    <PackageReference Include="YamlDotNet" Version="13.2.0" />
   </ItemGroup>
 
 </Project>
