@@ -16,6 +16,8 @@ public interface ILightSwitch
     LightSwitchState State { get; }
 
     void Trigger(LightSwitchCommand command);
+
+    bool IsInState(LightSwitchState state);
 }
 
 public class LightSwitch : ILightSwitch
@@ -31,37 +33,54 @@ public class LightSwitch : ILightSwitch
         triggerDelayTimer = new Timer(stayOn ?? STAY_ON_DEFAULT) { AutoReset = false, Enabled = false };
         triggerDelayTimer.Elapsed += DelayTimerElapsed;
 
-        stateMachine = new(LightSwitchState.OFF);
+        stateMachine = new(LightSwitchState.MANUAL_OFF);
 
-        stateMachine.Configure(LightSwitchState.OFF)
-            .Permit(LightSwitchCommand.ON, LightSwitchState.ON)
-            .Permit(LightSwitchCommand.FORCE_ON, LightSwitchState.FORCED_ON)
-            .Permit(LightSwitchCommand.FORCE_OFF, LightSwitchState.FORCED_OFF);
+        stateMachine.Configure(LightSwitchState.OFF);
 
-        stateMachine.Configure(LightSwitchState.PERSIST_ON)
+        stateMachine.Configure(LightSwitchState.ON);
+
+        stateMachine.Configure(LightSwitchState.MANUAL_OFF)
+            .SubstateOf(LightSwitchState.OFF)
+            .Permit(LightSwitchCommand.MANUAL_ON, LightSwitchState.MANUAL_ON)
+            .Permit(LightSwitchCommand.ENABLE_AUTO, LightSwitchState.AUTO_OFF);
+
+        stateMachine.Configure(LightSwitchState.MANUAL_ON)
+            .SubstateOf(LightSwitchState.ON)
+            .Permit(LightSwitchCommand.MANUAL_OFF, LightSwitchState.MANUAL_OFF)
+            .Permit(LightSwitchCommand.ENABLE_AUTO, LightSwitchState.MANUAL_AUTO_ON);
+
+        stateMachine.Configure(LightSwitchState.AUTO_OFF)
+            .SubstateOf(LightSwitchState.OFF)
+            .Permit(LightSwitchCommand.AUTO_ON, LightSwitchState.AUTO_ON)
+            .Permit(LightSwitchCommand.MANUAL_ON, LightSwitchState.MANUAL_AUTO_ON)
+            .Permit(LightSwitchCommand.DISABLE_AUTO, LightSwitchState.MANUAL_OFF);
+
+        stateMachine.Configure(LightSwitchState.AUTO_ON)
+            .SubstateOf(LightSwitchState.ON)
+            .Permit(LightSwitchCommand.AUTO_OFF, LightSwitchState.TIMED_AUTO_ON)
+            .Permit(LightSwitchCommand.MANUAL_OFF, LightSwitchState.AUTO_OFF)
+            .Permit(LightSwitchCommand.DISABLE_AUTO, LightSwitchState.MANUAL_OFF);
+
+        stateMachine.Configure(LightSwitchState.TIMED_AUTO_ON)
+            .SubstateOf(LightSwitchState.AUTO_ON)
             .OnEntry(() => ConfigureTimer(true, triggerDelayTimer))
             .OnExit(() => ConfigureTimer(false, triggerDelayTimer))
-            .Permit(LightSwitchCommand.TIMED_OFF, LightSwitchState.OFF)
-            .Permit(LightSwitchCommand.FORCE_ON, LightSwitchState.FORCED_ON)
-            .Permit(LightSwitchCommand.FORCE_OFF, LightSwitchState.FORCED_OFF);
+            .Permit(LightSwitchCommand.DELAYED_OFF, LightSwitchState.AUTO_OFF);
 
-        stateMachine.Configure(LightSwitchState.ON)
-            .Permit(LightSwitchCommand.OFF, LightSwitchState.PERSIST_ON)
-            .Permit(LightSwitchCommand.FORCE_ON, LightSwitchState.FORCED_ON)
-            .Permit(LightSwitchCommand.FORCE_OFF, LightSwitchState.FORCED_OFF);
-
-        stateMachine.Configure(LightSwitchState.FORCED_OFF)
-            .Permit(LightSwitchCommand.FORCE_ON, LightSwitchState.FORCED_ON)
-            .Permit(LightSwitchCommand.SET_OFF, LightSwitchState.OFF);
-
-        stateMachine.Configure(LightSwitchState.FORCED_ON)
-            .Permit(LightSwitchCommand.FORCE_OFF, LightSwitchState.FORCED_OFF)
-            .Permit(LightSwitchCommand.SET_OFF, LightSwitchState.OFF);
+        stateMachine.Configure(LightSwitchState.MANUAL_AUTO_ON)
+            .SubstateOf(LightSwitchState.MANUAL_ON)
+            .Permit(LightSwitchCommand.MANUAL_OFF, LightSwitchState.AUTO_OFF)
+            .Permit(LightSwitchCommand.DISABLE_AUTO, LightSwitchState.MANUAL_ON);
     }
 
     public void Trigger(LightSwitchCommand command)
     {
-        stateMachine.Fire(command);
+        stateMachine.FireAsync(command);
+    }
+
+    public bool IsInState(LightSwitchState state)
+    {
+        return stateMachine.IsInState(state);
     }
 
     private static void ConfigureTimer(bool active, Timer timer)
@@ -82,9 +101,9 @@ public class LightSwitch : ILightSwitch
 
     private void DelayTimerElapsed(object? sender, ElapsedEventArgs e)
     {
-        if (stateMachine.State != LightSwitchState.OFF)
+        if (!stateMachine.IsInState(LightSwitchState.OFF))
         {
-            stateMachine.Fire(LightSwitchCommand.TIMED_OFF);
+            stateMachine.FireAsync(LightSwitchCommand.DELAYED_OFF);
         }
     }
 }
@@ -93,17 +112,22 @@ public enum LightSwitchState
 {
     ON,
     OFF,
-    PERSIST_ON,
-    FORCED_ON,
-    FORCED_OFF
+    MANUAL_ON,
+    MANUAL_OFF,
+    MANUAL_AUTO_ON,
+    MANUAL_AUTO_OFF,
+    AUTO_ON,
+    AUTO_OFF,
+    TIMED_AUTO_ON
 }
 
 public enum LightSwitchCommand
 {
-    SET_OFF,
-    ON,
-    OFF,
-    FORCE_ON,
-    FORCE_OFF,
-    TIMED_OFF
+    MANUAL_ON,
+    MANUAL_OFF,
+    AUTO_ON,
+    AUTO_OFF,
+    DELAYED_OFF,
+    ENABLE_AUTO,
+    DISABLE_AUTO
 }

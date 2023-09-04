@@ -1,7 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using SimplySmart.Utils;
-using SimplySmart.Zwave;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -46,17 +44,20 @@ internal class AreaOccupantManager: IAreaOccupantManager
         foreach (var areaOccupantConfig in config.areaOccupants)
         {
             var areaOccupant = new AreaOccupant();
-            areaOccupant.stateMachine.OnTransitioned((transition) =>
-            {
-                if (transition.Destination == AreaOccupantState.EMPTY)
-                {
-                    lightSwitchManager[areaOccupantConfig.lightSwitch].Trigger(LightSwitchCommand.OFF);
-                }
-                else
-                {
-                    lightSwitchManager[areaOccupantConfig.lightSwitch].Trigger(LightSwitchCommand.ON);
-                }
-            });
+            areaOccupant.stateMachine.Configure(AreaOccupantState.EMPTY)
+                .OnEntry(() =>
+                    lightSwitchManager[areaOccupantConfig.lightSwitch].Trigger(LightSwitchCommand.AUTO_OFF)
+                );
+
+            areaOccupant.stateMachine.Configure(AreaOccupantState.MOVING)
+                .OnEntry(() =>
+                    lightSwitchManager[areaOccupantConfig.lightSwitch].Trigger(LightSwitchCommand.AUTO_ON)
+                );
+
+            areaOccupant.stateMachine.Configure(AreaOccupantState.STATIONARY)
+                .OnEntry(
+                    () => lightSwitchManager[areaOccupantConfig.lightSwitch].Trigger(LightSwitchCommand.AUTO_ON)
+                );
 
             states.Add(areaOccupantConfig.name, areaOccupant);
         }

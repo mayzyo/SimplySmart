@@ -7,7 +7,9 @@ using MQTTnet.Client;
 using MQTTnet.Extensions.ManagedClient;
 using MQTTnet.Packets;
 using SimplySmart.Frigate;
+using SimplySmart.Homebridge;
 using SimplySmart.Nodemation;
+using SimplySmart.Zwave;
 using System.Text;
 
 namespace SimplySmart.Core;
@@ -72,6 +74,8 @@ public class MqttService : IHostedService
             new MqttTopicFilterBuilder().WithTopic("frigate/events").Build(),
             new MqttTopicFilterBuilder().WithTopic("frigate/+/person").Build(),
             new MqttTopicFilterBuilder().WithTopic("nodemation/daylight").Build(),
+            new MqttTopicFilterBuilder().WithTopic("homebridge/light_switch/#").Build(),
+            new MqttTopicFilterBuilder().WithTopic("zwave/+/+/+/+/currentValue").Build(),
         };
         managedMqttClient.ApplicationMessageReceivedAsync += CreateScopedMessageReceived;
 
@@ -98,6 +102,18 @@ public class MqttService : IHostedService
         if (MqttTopicFilterComparer.Compare(topic, "nodemation/daylight") == MqttTopicFilterCompareResult.IsMatch)
         {
             INodemationDaylightHandler handler = scope.ServiceProvider.GetRequiredService<INodemationDaylightHandler>();
+            await handler.HandleEvent(e);
+        }
+
+        if (MqttTopicFilterComparer.Compare(topic, "homebridge/light_switch/#") == MqttTopicFilterCompareResult.IsMatch)
+        {
+            IHomebridgeLightSwitchHandler handler = scope.ServiceProvider.GetRequiredService<IHomebridgeLightSwitchHandler>();
+            await handler.HandleEvent(e);
+        }
+
+        if (MqttTopicFilterComparer.Compare(topic, "zwave/+/+/+/+/currentValue") == MqttTopicFilterCompareResult.IsMatch)
+        {
+            IZwaveLightSwitchHandler handler = scope.ServiceProvider.GetRequiredService<IZwaveLightSwitchHandler>();
             await handler.HandleEvent(e);
         }
     }

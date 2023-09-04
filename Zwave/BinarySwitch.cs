@@ -8,7 +8,7 @@ namespace SimplySmart.Zwave;
 
 public class BinarySwitch
 {
-    public long? time { get; set; }
+    public long time { get; set; }
     
     public bool value { get; set; }
 }

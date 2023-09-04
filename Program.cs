@@ -6,6 +6,7 @@ using MQTTnet;
 using MQTTnet.Extensions.ManagedClient;
 using SimplySmart.Core;
 using SimplySmart.Frigate;
+using SimplySmart.Homebridge;
 using SimplySmart.Nodemation;
 using SimplySmart.States;
 using SimplySmart.Zwave;
@@ -45,6 +46,7 @@ Host.CreateDefaultBuilder(args)
         services.AddTransient<IFrigateAreaHandler, FrigateAreaHandler>();
         services.AddTransient<INodemationDaylightHandler, NodemationDaylightHandler>();
         services.AddTransient<IZwaveLightSwitchHandler, ZwaveLightSwitchHandler>();
+        services.AddTransient<IHomebridgeLightSwitchHandler, HomebridgeLightSwitchHandler>();
     })
     .Build()
     .Run();

@@ -1,8 +1,10 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SimplySmart.Frigate;
+using SimplySmart.Homebridge;
 using SimplySmart.Utils;
 using SimplySmart.Zwave;
+using Stateless;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +21,8 @@ public interface ILightSwitchManager
     void DisableAuto();
 
     void EnableAuto();
+
+    bool Exists(string key);
 }
 
 internal class LightSwitchManager : ILightSwitchManager
@@ -52,20 +56,26 @@ internal class LightSwitchManager : ILightSwitchManager
         foreach (var lightSwitchConfig in config.lightSwitches)
         {
             var lightSwitch = new LightSwitch(lightSwitchConfig.stayOn);
-            lightSwitch.stateMachine.OnTransitioned(async (transition) =>
-            {
-                using var scope = serviceProvider.CreateScope();
-                IZwaveLightSwitchHandler handler = scope.ServiceProvider.GetRequiredService<IZwaveLightSwitchHandler>();
 
-                if (transition.Destination == LightSwitchState.ON || transition.Destination == LightSwitchState.FORCED_ON)
+            lightSwitch.stateMachine.Configure(LightSwitchState.ON)
+                .OnEntryAsync(async (e) =>
                 {
-                    await handler.HandleOn(lightSwitchConfig.name);
-                }
-                else if ((transition.Destination == LightSwitchState.OFF || transition.Destination == LightSwitchState.FORCED_OFF) && transition.Source != LightSwitchState.FORCED_OFF)
+                    using var scope = serviceProvider.CreateScope();
+                    IZwaveLightSwitchHandler zwaveHandler = scope.ServiceProvider.GetRequiredService<IZwaveLightSwitchHandler>();
+                    IHomebridgeLightSwitchHandler homebridgeHandler = scope.ServiceProvider.GetRequiredService<IHomebridgeLightSwitchHandler>();
+                    await zwaveHandler.HandleOn(lightSwitchConfig.name);
+                    await homebridgeHandler.HandleOn(lightSwitchConfig.name);
+                });
+
+            lightSwitch.stateMachine.Configure(LightSwitchState.OFF)
+                .OnEntryAsync(async () =>
                 {
-                    await handler.HandleOff(lightSwitchConfig.name);
-                }
-            });
+                    using var scope = serviceProvider.CreateScope();
+                    IZwaveLightSwitchHandler zwaveHandler = scope.ServiceProvider.GetRequiredService<IZwaveLightSwitchHandler>();
+                    IHomebridgeLightSwitchHandler homebridgeHandler = scope.ServiceProvider.GetRequiredService<IHomebridgeLightSwitchHandler>();
+                    await zwaveHandler.HandleOff(lightSwitchConfig.name);
+                    await homebridgeHandler.HandleOff(lightSwitchConfig.name);
+                });
 
             states.Add(lightSwitchConfig.name, lightSwitch);
         }
@@ -76,7 +86,7 @@ internal class LightSwitchManager : ILightSwitchManager
         logger.LogInformation("Auto light switch disabled");
         foreach (var state in states)
         {
-            state.Value.Trigger(LightSwitchCommand.FORCE_OFF);
+            state.Value.Trigger(LightSwitchCommand.DISABLE_AUTO);
         }
     }
 
@@ -85,7 +95,12 @@ internal class LightSwitchManager : ILightSwitchManager
         logger.LogInformation("Auto light switch enabled");
         foreach (var state in states)
         {
-            state.Value.Trigger(LightSwitchCommand.SET_OFF);
+            state.Value.Trigger(LightSwitchCommand.ENABLE_AUTO);
         }
+    }
+
+    public bool Exists(string key)
+    {
+        return states.ContainsKey(key);
     }
 }

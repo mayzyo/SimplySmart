@@ -1,4 +1,4 @@
-﻿namespace SimplySmart.HomeKit;
+﻿namespace SimplySmart.Homebridge;
 
 public enum TargetState
 {
