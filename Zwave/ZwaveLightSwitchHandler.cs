@@ -2,8 +2,8 @@
 using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Extensions.ManagedClient;
-using SimplySmart.Frigate;
 using SimplySmart.States;
+using SimplySmart.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +16,7 @@ public interface IZwaveLightSwitchHandler
 {
     Task HandleEvent(MqttApplicationMessageReceivedEventArgs e);
     Task HandleOn(string triggerUri);
+    Task HandleOn(string triggerUri, ushort brightness);
     Task HandleOff(string triggerUri);
 }
 
@@ -46,6 +47,13 @@ internal class ZwaveLightSwitchHandler : IZwaveLightSwitchHandler
         await mqttClient.EnqueueAsync($"zwave/{triggerUri}/targetValue/set", payload);
     }
 
+    public async Task HandleOn(string triggerUri, ushort brightness)
+    {
+        var epoch = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var payload = JsonSerializer.Serialize(new DimmerSwitch { value = (ushort)(brightness == 100 ? 99 : brightness), time = epoch });
+        await mqttClient.EnqueueAsync($"zwave/{triggerUri}/targetValue/set", payload);
+    }
+
     public async Task HandleEvent(MqttApplicationMessageReceivedEventArgs e)
     {
         var name = e.ApplicationMessage.Topic.Replace("zwave/", "").Replace("/currentValue", "");
@@ -55,14 +63,39 @@ internal class ZwaveLightSwitchHandler : IZwaveLightSwitchHandler
         }
 
         var message = e.ApplicationMessage.ConvertPayloadToString();
-        var binarySwitch = DeserialiseMessage(message);
-        if (binarySwitch == null)
-        {
-            logger.LogError("message JSON was empty");
-            return;
-        }
 
-        ChangeLightSwitchState(name, binarySwitch.value);
+        if (MqttTopicFilterComparer.Compare(e.ApplicationMessage.Topic, "zwave/+/+/37/+/currentValue") == MqttTopicFilterCompareResult.IsMatch)
+        {
+            var binarySwitch = DeserialiseMessage<BinarySwitch>(message);
+            if (binarySwitch == default)
+            {
+                logger.LogError("message JSON was empty");
+                return;
+            }
+
+            ChangeLightSwitchState(name, binarySwitch.value);
+        }
+        else
+        {
+            var dimmer = (IDimmerLightSwitch)lightSwitchManager[name];
+            var dimmerSwitch = DeserialiseMessage<DimmerSwitch>(message);
+            if (dimmerSwitch == default)
+            {
+                logger.LogError("message JSON was empty");
+                return;
+            }
+
+            dimmerSwitch.value = (ushort)(dimmerSwitch.value == 99 ? 100 : dimmerSwitch.value);
+
+            if (dimmerSwitch.value == 0)
+            {
+                dimmer.Trigger(LightSwitchCommand.MANUAL_OFF);
+            }
+            else if(dimmer.IsInState(LightSwitchState.OFF) || dimmerSwitch.value != dimmer.Brightness)
+            {
+                dimmer.Trigger(LightSwitchCommand.MANUAL_ON, dimmerSwitch.value, BroadcastSource.ZWAVE);
+            }
+        }
     }
 
     private void ChangeLightSwitchState(string name, bool isOn)
@@ -77,17 +110,17 @@ internal class ZwaveLightSwitchHandler : IZwaveLightSwitchHandler
         }
     }
 
-    private BinarySwitch? DeserialiseMessage(string message)
+    private T? DeserialiseMessage<T>(string message)
     {
         try
         {
-            return JsonSerializer.Deserialize<BinarySwitch>(message);
+            return JsonSerializer.Deserialize<T>(message);
         }
         catch
         {
             logger.LogError("message not in JSON format.");
         }
 
-        return null;
+        return default;
     }
 }

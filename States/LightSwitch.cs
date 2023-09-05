@@ -35,10 +35,6 @@ public class LightSwitch : ILightSwitch
 
         stateMachine = new(LightSwitchState.MANUAL_OFF);
 
-        stateMachine.Configure(LightSwitchState.OFF);
-
-        stateMachine.Configure(LightSwitchState.ON);
-
         stateMachine.Configure(LightSwitchState.MANUAL_OFF)
             .SubstateOf(LightSwitchState.OFF)
             .Permit(LightSwitchCommand.MANUAL_ON, LightSwitchState.MANUAL_ON)

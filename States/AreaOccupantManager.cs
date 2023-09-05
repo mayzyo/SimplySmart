@@ -41,6 +41,11 @@ internal class AreaOccupantManager: IAreaOccupantManager
         using var sr = File.OpenText(path);
         var config = deserializer.Deserialize<ApplicationConfig>(sr);
 
+        if(config.areaOccupants == null)
+        {
+            return;
+        }
+
         foreach (var areaOccupantConfig in config.areaOccupants)
         {
             var areaOccupant = new AreaOccupant();

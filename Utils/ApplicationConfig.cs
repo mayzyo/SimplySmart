@@ -29,6 +29,7 @@ public class LightSwitch
     public string name { get; set; }
 
     public int? stayOn { get; set; }
+    public bool? isDimmer { get; set; }
 }
 
 public class Surveillance
