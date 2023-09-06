@@ -53,7 +53,7 @@ internal class HomebridgeLightSwitchHandler : IHomebridgeLightSwitchHandler
         var name = e.ApplicationMessage.Topic.Replace("homebridge/light_switch/", "");
         var message = e.ApplicationMessage.ConvertPayloadToString();
 
-        if (MqttTopicFilterComparer.Compare(e.ApplicationMessage.Topic, "homebridge/light_switch/+/37/#") == MqttTopicFilterCompareResult.IsMatch)
+        if (MqttTopicFilterComparer.Compare(e.ApplicationMessage.Topic, "homebridge/light_switch/+/+/37/#") == MqttTopicFilterCompareResult.IsMatch)
         {
             var isOn = bool.Parse(message);
             ChangeLightSwitchState(name, isOn);
