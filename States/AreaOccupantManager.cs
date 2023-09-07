@@ -37,15 +37,16 @@ internal class AreaOccupantManager: IAreaOccupantManager
     public AreaOccupantManager(ILogger<AreaOccupantManager> logger, IDeserializer deserializer, ILightSwitchManager lightSwitchManager)
     {
         this.logger = logger;
-        var path = Environment.GetEnvironmentVariable("CONFIG_FILE_PATH") ?? throw new Exception("Config file missing!");
-        using var sr = File.OpenText(path);
-        var config = deserializer.Deserialize<ApplicationConfig>(sr);
+        var config = DeserialiseConfig(deserializer);
 
-        if(config.areaOccupants == null)
+        if (config.areaOccupants != null)
         {
-            return;
+            Initialise(config, lightSwitchManager);
         }
+    }
 
+    private void Initialise(ApplicationConfig config, ILightSwitchManager lightSwitchManager)
+    {
         foreach (var areaOccupantConfig in config.areaOccupants)
         {
             var areaOccupant = new AreaOccupant();
@@ -66,6 +67,13 @@ internal class AreaOccupantManager: IAreaOccupantManager
 
             states.Add(areaOccupantConfig.name, areaOccupant);
         }
+    }
+
+    private static ApplicationConfig DeserialiseConfig(IDeserializer deserializer)
+    {
+        var path = Environment.GetEnvironmentVariable("CONFIG_FILE_PATH") ?? throw new Exception("Config file missing!");
+        using var sr = File.OpenText(path);
+        return deserializer.Deserialize<ApplicationConfig>(sr);
     }
 
     public bool Exists(string key)

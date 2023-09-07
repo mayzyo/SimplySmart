@@ -2,6 +2,7 @@
 using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Extensions.ManagedClient;
+using SimplySmart.States;
 using SimplySmart.Utils;
 using System;
 using System.Collections.Generic;
@@ -21,12 +22,14 @@ public class FrigateEventHandler : IFrigateEventHandler
 {
     private readonly ILogger<FrigateEventHandler> logger;
     private readonly IManagedMqttClient mqttClient;
+    private readonly IHouseManager houseManager;
     private static ApplicationConfig? applicationConfig;
 
-    public FrigateEventHandler(ILogger<FrigateEventHandler> logger, IDeserializer deserializer, IManagedMqttClient mqttClient)
+    public FrigateEventHandler(ILogger<FrigateEventHandler> logger, IDeserializer deserializer, IManagedMqttClient mqttClient, IHouseManager houseManager)
     {
         this.logger = logger;
         this.mqttClient = mqttClient;
+        this.houseManager = houseManager;
 
         if (applicationConfig == null)
         {
@@ -52,7 +55,7 @@ public class FrigateEventHandler : IFrigateEventHandler
             return;
         }
 
-        await TriggerOutdoor(frigateEvent, message);
+        await PassthroughEvents(frigateEvent, message);
     }
 
     private FrigateEvent? DeserialiseEvent(string message)
@@ -69,20 +72,38 @@ public class FrigateEventHandler : IFrigateEventHandler
         return null;
     }
 
-    private async Task TriggerOutdoor(FrigateEvent frigateEvent, string message)
+    private async Task PassthroughEvents(FrigateEvent frigateEvent, string message)
     {
+        if(houseManager.Security.State == HouseSecurityState.OFF)
+        {
+            return;
+        }
+
         if (frigateEvent.type == "new")
         {
             if (frigateEvent.before?.label == "car")
             {
-                await mqttClient.EnqueueAsync("simply_smart/car", message);
+                await mqttClient.EnqueueAsync("simply_smart/house_security/car", message);
             }
         }
         else if (frigateEvent.type == "end")
         {
-            if (applicationConfig?.surveillances.Any(e => e.name == frigateEvent.before?.camera) == true)
+            if (houseManager.Security.State == HouseSecurityState.AWAY)
             {
-                await mqttClient.EnqueueAsync("simply_smart/outdoor", message);
+                await mqttClient.EnqueueAsync("simply_smart/house_security/alert", message);
+            }
+            else if(applicationConfig?.surveillances.Any(e => e.name == frigateEvent.before?.camera) == true)
+            {
+                if(houseManager.Security.State == HouseSecurityState.NIGHT)
+                {
+                    await mqttClient.EnqueueAsync("simply_smart/house_security/alert", message);
+                }
+                else
+                {
+                    frigateEvent.type = "outdoor";
+                    await mqttClient.EnqueueAsync("simply_smart/house_security/alert", JsonSerializer.Serialize(frigateEvent));
+
+                }
             }
         }
     }

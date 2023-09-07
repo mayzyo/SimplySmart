@@ -16,9 +16,7 @@ public interface ILightSwitchManager
 {
     ILightSwitch this[string key] { get; }
 
-    void DisableAuto();
-
-    void EnableAuto();
+    void All(LightSwitchCommand command);
 
     bool Exists(string key);
 }
@@ -45,24 +43,22 @@ internal class LightSwitchManager : ILightSwitchManager
     public LightSwitchManager(ILogger<LightSwitchManager> logger, IServiceProvider serviceProvider, IDeserializer deserializer)
     {
         this.logger = logger;
-        Initialise(serviceProvider, deserializer);
-    }
 
-    public void DisableAuto()
-    {
-        logger.LogInformation("Auto light switch disabled");
-        foreach (var state in states)
+        var config = DeserialiseConfig(deserializer);
+
+        if (config.lightSwitches != null)
         {
-            state.Value.Trigger(LightSwitchCommand.DISABLE_AUTO);
+            Initialise(serviceProvider, config);
         }
     }
 
-    public void EnableAuto()
+    public void All(LightSwitchCommand command)
     {
-        logger.LogInformation("Auto light switch enabled");
+        logger.LogInformation("All light switch triggered");
+
         foreach (var state in states)
         {
-            state.Value.Trigger(LightSwitchCommand.ENABLE_AUTO);
+            state.Value.Trigger(command);
         }
     }
 
@@ -71,17 +67,8 @@ internal class LightSwitchManager : ILightSwitchManager
         return states.ContainsKey(key);
     }
 
-    private void Initialise(IServiceProvider serviceProvider, IDeserializer deserializer)
+    private void Initialise(IServiceProvider serviceProvider, ApplicationConfig config)
     {
-        var path = Environment.GetEnvironmentVariable("CONFIG_FILE_PATH") ?? throw new Exception("Config file missing!");
-        using var sr = File.OpenText(path);
-        var config = deserializer.Deserialize<ApplicationConfig>(sr);
-
-        if (config.lightSwitches == null)
-        {
-            return;
-        }
-
         foreach (var lightSwitchConfig in config.lightSwitches)
         {
             LightSwitch lightSwitch;
@@ -138,5 +125,12 @@ internal class LightSwitchManager : ILightSwitchManager
 
             states.Add(lightSwitchConfig.name, lightSwitch);
         }
+    }
+
+    private static ApplicationConfig DeserialiseConfig(IDeserializer deserializer)
+    {
+        var path = Environment.GetEnvironmentVariable("CONFIG_FILE_PATH") ?? throw new Exception("Config file missing!");
+        using var sr = File.OpenText(path);
+        return deserializer.Deserialize<ApplicationConfig>(sr);
     }
 }

@@ -41,12 +41,15 @@ Host.CreateDefaultBuilder(args)
         services.AddSingleton(deserializer);
         services.AddSingleton<ILightSwitchManager, LightSwitchManager>();
         services.AddSingleton<IAreaOccupantManager, AreaOccupantManager>();
+        services.AddSingleton<IHouseManager, HouseManager>();
 
         services.AddTransient<IFrigateEventHandler, FrigateEventHandler>();
         services.AddTransient<IFrigateAreaHandler, FrigateAreaHandler>();
         services.AddTransient<INodemationDaylightHandler, NodemationDaylightHandler>();
         services.AddTransient<IZwaveLightSwitchHandler, ZwaveLightSwitchHandler>();
         services.AddTransient<IHomebridgeLightSwitchHandler, HomebridgeLightSwitchHandler>();
+        services.AddTransient<IHomebridgeSwitchHandler, HomebridgeSwitchHandler>();
+        services.AddTransient<IHomebridgeSecurityHandler, HomebridgeSecurityHandler>();
     })
     .Build()
     .Run();

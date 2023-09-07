@@ -19,12 +19,12 @@ public interface INodemationDaylightHandler
 internal class NodemationDaylightHandler : INodemationDaylightHandler
 {
     private readonly ILogger<NodemationDaylightHandler> logger;
-    private readonly ILightSwitchManager lightSwitchManager;
+    private readonly IHouseManager houseManager;
 
-    public NodemationDaylightHandler(ILogger<NodemationDaylightHandler> logger, ILightSwitchManager lightSwitchManager)
+    public NodemationDaylightHandler(ILogger<NodemationDaylightHandler> logger, IHouseManager houseManager)
     {
         this.logger = logger;
-        this.lightSwitchManager = lightSwitchManager;
+        this.houseManager = houseManager;
     }
 
     public async Task HandleEvent(MqttApplicationMessageReceivedEventArgs e)
@@ -44,11 +44,13 @@ internal class NodemationDaylightHandler : INodemationDaylightHandler
     {
         if (isSunrise)
         {
-            lightSwitchManager.DisableAuto();
+            logger.LogInformation("Disabling auto light");
+            houseManager.AutoLight.Trigger(AutoLightCommand.OFF);
         }
         else
         {
-            lightSwitchManager.EnableAuto();
+            logger.LogInformation("Enabling auto light");
+            houseManager.AutoLight.Trigger(AutoLightCommand.ON);
         }
     }
 

@@ -5,34 +5,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static SimplySmart.States.AreaOccupant;
 
 namespace SimplySmart.States;
 
 public interface IAreaOccupant
 {
     AreaOccupantState State { get; }
-    public event OnEmptyDel? OnEmpty;
 
     void Trigger(AreaOccupantCommand command);
 }
 
 public class AreaOccupant : IAreaOccupant
 {
-    public delegate void OnEmptyDel();
-    public event OnEmptyDel? OnEmpty;
     public AreaOccupantState State { get { return stateMachine.State; } }
     public readonly StateMachine<AreaOccupantState, AreaOccupantCommand> stateMachine;
 
     public AreaOccupant()
     {
         stateMachine = new(AreaOccupantState.EMPTY);
-        //stateMachine.OnTransitioned((transition) => {
-        //    if(transition.Destination == AreaOccupantState.EMPTY && OnEmpty != null)
-        //    {
-        //        OnEmpty();
-        //    }
-        //});
 
         stateMachine.Configure(AreaOccupantState.EMPTY)
             .Permit(AreaOccupantCommand.SET_MOVING, AreaOccupantState.MOVING);

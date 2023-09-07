@@ -75,6 +75,8 @@ public class MqttService : IHostedService
             new MqttTopicFilterBuilder().WithTopic("frigate/+/person").Build(),
             new MqttTopicFilterBuilder().WithTopic("nodemation/daylight").Build(),
             new MqttTopicFilterBuilder().WithTopic("homebridge/light_switch/#").Build(),
+            new MqttTopicFilterBuilder().WithTopic("homebridge/switch/+/setOn").Build(),
+            new MqttTopicFilterBuilder().WithTopic("homebridge/security/setTargetState").Build(),
             new MqttTopicFilterBuilder().WithTopic("zwave/+/+/+/+/currentValue").Build(),
         };
         managedMqttClient.ApplicationMessageReceivedAsync += CreateScopedMessageReceived;
@@ -92,26 +94,32 @@ public class MqttService : IHostedService
             IFrigateEventHandler handler = scope.ServiceProvider.GetRequiredService<IFrigateEventHandler>();
             await handler.HandleEvent(e);
         }
-
-        if (MqttTopicFilterComparer.Compare(topic, "frigate/+/person") == MqttTopicFilterCompareResult.IsMatch)
+        else if (MqttTopicFilterComparer.Compare(topic, "frigate/+/person") == MqttTopicFilterCompareResult.IsMatch)
         {
             IFrigateAreaHandler handler = scope.ServiceProvider.GetRequiredService<IFrigateAreaHandler>();
             await handler.HandleEvent(e);
         }
-
-        if (MqttTopicFilterComparer.Compare(topic, "nodemation/daylight") == MqttTopicFilterCompareResult.IsMatch)
+        else if (MqttTopicFilterComparer.Compare(topic, "nodemation/daylight") == MqttTopicFilterCompareResult.IsMatch)
         {
             INodemationDaylightHandler handler = scope.ServiceProvider.GetRequiredService<INodemationDaylightHandler>();
             await handler.HandleEvent(e);
         }
-
-        if (MqttTopicFilterComparer.Compare(topic, "homebridge/light_switch/#") == MqttTopicFilterCompareResult.IsMatch)
+        else if (MqttTopicFilterComparer.Compare(topic, "homebridge/light_switch/#") == MqttTopicFilterCompareResult.IsMatch)
         {
             IHomebridgeLightSwitchHandler handler = scope.ServiceProvider.GetRequiredService<IHomebridgeLightSwitchHandler>();
             await handler.HandleEvent(e);
         }
-
-        if (MqttTopicFilterComparer.Compare(topic, "zwave/+/+/+/+/currentValue") == MqttTopicFilterCompareResult.IsMatch)
+        else if (MqttTopicFilterComparer.Compare(topic, "homebridge/switch/+/setOn") == MqttTopicFilterCompareResult.IsMatch)
+        {
+            IHomebridgeSwitchHandler handler = scope.ServiceProvider.GetRequiredService<IHomebridgeSwitchHandler>();
+            await handler.HandleEvent(e);
+        }
+        else if (MqttTopicFilterComparer.Compare(topic, "homebridge/security/setTargetState") == MqttTopicFilterCompareResult.IsMatch)
+        {
+            IHomebridgeSecurityHandler handler = scope.ServiceProvider.GetRequiredService<IHomebridgeSecurityHandler>();
+            await handler.HandleEvent(e);
+        }
+        else if (MqttTopicFilterComparer.Compare(topic, "zwave/+/+/+/+/currentValue") == MqttTopicFilterCompareResult.IsMatch)
         {
             IZwaveLightSwitchHandler handler = scope.ServiceProvider.GetRequiredService<IZwaveLightSwitchHandler>();
             await handler.HandleEvent(e);
