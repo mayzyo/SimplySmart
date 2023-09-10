@@ -77,7 +77,10 @@ public class MqttService : IHostedService
             new MqttTopicFilterBuilder().WithTopic("homebridge/light_switch/#").Build(),
             new MqttTopicFilterBuilder().WithTopic("homebridge/switch/+/setOn").Build(),
             new MqttTopicFilterBuilder().WithTopic("homebridge/security/setTargetState").Build(),
-            new MqttTopicFilterBuilder().WithTopic("zwave/+/+/+/+/currentValue").Build(),
+            new MqttTopicFilterBuilder().WithTopic(IHomebridgeGarageDoorOpenerHandler.MQTT_TOPIC).Build(),
+            new MqttTopicFilterBuilder().WithTopic(IZwaveBinarySwitchHandler.MQTT_TOPIC).Build(),
+            new MqttTopicFilterBuilder().WithTopic(IZwaveMultiLevelSwitchHandler.MQTT_TOPIC).Build(),
+            new MqttTopicFilterBuilder().WithTopic(IZwaveCentralSceneHandler.MQTT_TOPIC).Build(),
         };
         managedMqttClient.ApplicationMessageReceivedAsync += CreateScopedMessageReceived;
 
@@ -119,9 +122,24 @@ public class MqttService : IHostedService
             IHomebridgeSecurityHandler handler = scope.ServiceProvider.GetRequiredService<IHomebridgeSecurityHandler>();
             await handler.HandleEvent(e);
         }
-        else if (MqttTopicFilterComparer.Compare(topic, "zwave/+/+/+/+/currentValue") == MqttTopicFilterCompareResult.IsMatch)
+        else if (MqttTopicFilterComparer.Compare(topic, IHomebridgeGarageDoorOpenerHandler.MQTT_TOPIC) == MqttTopicFilterCompareResult.IsMatch)
         {
-            IZwaveLightSwitchHandler handler = scope.ServiceProvider.GetRequiredService<IZwaveLightSwitchHandler>();
+            IHomebridgeGarageDoorOpenerHandler handler = scope.ServiceProvider.GetRequiredService<IHomebridgeGarageDoorOpenerHandler>();
+            await handler.HandleEvent(e);
+        }
+        else if (MqttTopicFilterComparer.Compare(topic, IZwaveBinarySwitchHandler.MQTT_TOPIC) == MqttTopicFilterCompareResult.IsMatch)
+        {
+            IZwaveBinarySwitchHandler handler = scope.ServiceProvider.GetRequiredService<IZwaveBinarySwitchHandler>();
+            await handler.HandleEvent(e);
+        }
+        else if (MqttTopicFilterComparer.Compare(topic, IZwaveMultiLevelSwitchHandler.MQTT_TOPIC) == MqttTopicFilterCompareResult.IsMatch)
+        {
+            IZwaveMultiLevelSwitchHandler handler = scope.ServiceProvider.GetRequiredService<IZwaveMultiLevelSwitchHandler>();
+            await handler.HandleEvent(e);
+        }
+        else if (MqttTopicFilterComparer.Compare(topic, IZwaveCentralSceneHandler.MQTT_TOPIC) == MqttTopicFilterCompareResult.IsMatch)
+        {
+            IZwaveCentralSceneHandler handler = scope.ServiceProvider.GetRequiredService<IZwaveCentralSceneHandler>();
             await handler.HandleEvent(e);
         }
     }

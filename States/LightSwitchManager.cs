@@ -38,7 +38,6 @@ internal class LightSwitchManager : ILightSwitchManager
 
     private readonly ILogger<LightSwitchManager> logger;
     private readonly IDictionary<string, ILightSwitch> states = new Dictionary<string, ILightSwitch>();
-    private readonly IDictionary<string, IDimmerLightSwitch> dimmers = new Dictionary<string, IDimmerLightSwitch>();
 
     public LightSwitchManager(ILogger<LightSwitchManager> logger, IServiceProvider serviceProvider, IDeserializer deserializer)
     {
@@ -89,14 +88,13 @@ internal class LightSwitchManager : ILightSwitchManager
                         }
                         else if(dimmerLightSwitch.Source == BroadcastSource.HOMEBRIDGE)
                         {
-                            IZwaveLightSwitchHandler zwaveHandler = scope.ServiceProvider.GetRequiredService<IZwaveLightSwitchHandler>();
+                            IZwaveMultiLevelSwitchHandler zwaveHandler = scope.ServiceProvider.GetRequiredService<IZwaveMultiLevelSwitchHandler>();
                             await zwaveHandler.HandleOn(lightSwitchConfig.name, dimmerLightSwitch.Brightness);
                         }
                     })
                     .PermitReentryIf(LightSwitchCommand.MANUAL_ON, dimmerLightSwitch.LevelChange);
 
                 lightSwitch = dimmerLightSwitch;
-                dimmers.Add(lightSwitchConfig.name, dimmerLightSwitch);
             }
             else
             {
@@ -106,7 +104,7 @@ internal class LightSwitchManager : ILightSwitchManager
                     .OnEntryAsync(async () =>
                     {
                         using var scope = serviceProvider.CreateScope();
-                        IZwaveLightSwitchHandler zwaveHandler = scope.ServiceProvider.GetRequiredService<IZwaveLightSwitchHandler>();
+                        IZwaveBinarySwitchHandler zwaveHandler = scope.ServiceProvider.GetRequiredService<IZwaveBinarySwitchHandler>();
                         IHomebridgeLightSwitchHandler homebridgeHandler = scope.ServiceProvider.GetRequiredService<IHomebridgeLightSwitchHandler>();
                         await zwaveHandler.HandleOn(lightSwitchConfig.name);
                         await homebridgeHandler.HandleOn(lightSwitchConfig.name);
@@ -117,7 +115,7 @@ internal class LightSwitchManager : ILightSwitchManager
                 .OnEntryAsync(async () =>
                 {
                     using var scope = serviceProvider.CreateScope();
-                    IZwaveLightSwitchHandler zwaveHandler = scope.ServiceProvider.GetRequiredService<IZwaveLightSwitchHandler>();
+                    IZwaveBinarySwitchHandler zwaveHandler = scope.ServiceProvider.GetRequiredService<IZwaveBinarySwitchHandler>();
                     IHomebridgeLightSwitchHandler homebridgeHandler = scope.ServiceProvider.GetRequiredService<IHomebridgeLightSwitchHandler>();
                     await zwaveHandler.HandleOff(lightSwitchConfig.name);
                     await homebridgeHandler.HandleOff(lightSwitchConfig.name);

@@ -38,18 +38,25 @@ Host.CreateDefaultBuilder(args)
         var deserializer = new DeserializerBuilder()
             .WithNamingConvention(CamelCaseNamingConvention.Instance)
             .Build();
+
         services.AddSingleton(deserializer);
         services.AddSingleton<ILightSwitchManager, LightSwitchManager>();
         services.AddSingleton<IAreaOccupantManager, AreaOccupantManager>();
+        services.AddSingleton<IAccessPointManager, AccessPointManager>();
+        services.AddSingleton<IFobManager, FobManager>();
         services.AddSingleton<IHouseManager, HouseManager>();
 
         services.AddTransient<IFrigateEventHandler, FrigateEventHandler>();
         services.AddTransient<IFrigateAreaHandler, FrigateAreaHandler>();
         services.AddTransient<INodemationDaylightHandler, NodemationDaylightHandler>();
-        services.AddTransient<IZwaveLightSwitchHandler, ZwaveLightSwitchHandler>();
+        services.AddTransient<IZwaveBinarySwitchHandler, ZwaveBinarySwitchHandler>();
+        services.AddTransient<IZwaveMultiLevelSwitchHandler, ZwaveMultiLevelSwitchHandler>();
+        services.AddTransient<IZwaveCentralSceneHandler, ZwaveCentralSceneHandler>();
+
         services.AddTransient<IHomebridgeLightSwitchHandler, HomebridgeLightSwitchHandler>();
         services.AddTransient<IHomebridgeSwitchHandler, HomebridgeSwitchHandler>();
         services.AddTransient<IHomebridgeSecurityHandler, HomebridgeSecurityHandler>();
+        services.AddTransient<IHomebridgeGarageDoorOpenerHandler, HomebridgeGarageDoorOpenerHandler>();
     })
     .Build()
     .Run();

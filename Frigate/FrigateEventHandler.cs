@@ -47,6 +47,11 @@ public class FrigateEventHandler : IFrigateEventHandler
             return;
         }
 
+        if (applicationConfig?.surveillances == null)
+        {
+            return;
+        }
+
         var message = e.ApplicationMessage.ConvertPayloadToString();
         var frigateEvent = DeserialiseEvent(message);
         if (frigateEvent == null)

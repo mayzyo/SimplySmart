@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SimplySmart.Zwave;
 
-public class DimmerSwitch
+public class MultilevelSwitch
 {
     public long time { get; set; }
     

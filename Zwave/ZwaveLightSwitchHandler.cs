@@ -11,7 +11,7 @@ using System.Text;
 using System.Text.Json;
 
 namespace SimplySmart.Zwave;
-
+// DEPRECATED
 public interface IZwaveLightSwitchHandler
 {
     Task HandleEvent(MqttApplicationMessageReceivedEventArgs e);
@@ -50,7 +50,7 @@ internal class ZwaveLightSwitchHandler : IZwaveLightSwitchHandler
     public async Task HandleOn(string triggerUri, ushort brightness)
     {
         var epoch = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        var payload = JsonSerializer.Serialize(new DimmerSwitch { value = (ushort)(brightness == 100 ? 99 : brightness), time = epoch });
+        var payload = JsonSerializer.Serialize(new MultilevelSwitch { value = (ushort)(brightness == 100 ? 99 : brightness), time = epoch });
         await mqttClient.EnqueueAsync($"zwave/{triggerUri}/targetValue/set", payload);
     }
 
@@ -78,7 +78,7 @@ internal class ZwaveLightSwitchHandler : IZwaveLightSwitchHandler
         else
         {
             var dimmer = (IDimmerLightSwitch)lightSwitchManager[name];
-            var dimmerSwitch = DeserialiseMessage<DimmerSwitch>(message);
+            var dimmerSwitch = DeserialiseMessage<MultilevelSwitch>(message);
             if (dimmerSwitch == default)
             {
                 logger.LogError("message JSON was empty");
