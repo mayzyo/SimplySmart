@@ -15,7 +15,7 @@ public interface IZwaveCentralSceneHandler
 
     Task HandleEvent(MqttApplicationMessageReceivedEventArgs e);
 }
-
+// Just the FOB at the moment.
 internal class ZwaveCentralSceneHandler : IZwaveCentralSceneHandler
 {
     private readonly ILogger<ZwaveCentralSceneHandler> logger;

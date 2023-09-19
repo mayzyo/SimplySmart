@@ -52,6 +52,7 @@ Host.CreateDefaultBuilder(args)
         services.AddTransient<IZwaveBinarySwitchHandler, ZwaveBinarySwitchHandler>();
         services.AddTransient<IZwaveMultiLevelSwitchHandler, ZwaveMultiLevelSwitchHandler>();
         services.AddTransient<IZwaveCentralSceneHandler, ZwaveCentralSceneHandler>();
+        services.AddTransient<IZwaveNotificationHandler, ZwaveNotificationHandler>();
 
         services.AddTransient<IHomebridgeLightSwitchHandler, HomebridgeLightSwitchHandler>();
         services.AddTransient<IHomebridgeSwitchHandler, HomebridgeSwitchHandler>();

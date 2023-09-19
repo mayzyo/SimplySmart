@@ -9,22 +9,24 @@ public class ApplicationConfig
 {
     public string version { get; set; }
 
-    public List<AreaOccupant> areaOccupants { get; set; }
+    public List<Camera> cameras { get; set; }
 
     public List<LightSwitch> lightSwitches { get; set; }
-
-    public List<Surveillance> surveillances { get; set; }
 
     public List<SmartImplant> smartImplants { get; set; }
 
     public List<Fob> fobs { get; set; }
+
+    public List<MultiSensor> multiSensors { get; set; }
 }
 
-public class AreaOccupant
+public class Camera
 {
     public string name { get; set; }
 
-    public string lightSwitch { get; set; }
+    public string? lightSwitch { get; set; }
+
+    public bool isSurveillance { get; set; }
 }
 
 public class LightSwitch
@@ -33,11 +35,6 @@ public class LightSwitch
 
     public int? stayOn { get; set; }
     public bool? isDimmer { get; set; }
-}
-
-public class Surveillance
-{
-    public string name { get; set; }
 }
 
 public class SmartImplant
@@ -59,4 +56,11 @@ public class FobButton
     public string name { get; set; }
 
     public string command { get; set; }
+}
+
+public class MultiSensor
+{
+    public string name { get; set; }
+
+    public string? lightSwitch { get; set; }
 }

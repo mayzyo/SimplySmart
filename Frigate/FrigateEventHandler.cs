@@ -47,7 +47,7 @@ public class FrigateEventHandler : IFrigateEventHandler
             return;
         }
 
-        if (applicationConfig?.surveillances == null)
+        if (applicationConfig?.cameras == null)
         {
             return;
         }
@@ -97,7 +97,7 @@ public class FrigateEventHandler : IFrigateEventHandler
             {
                 await mqttClient.EnqueueAsync("simply_smart/house_security/alert", message);
             }
-            else if(applicationConfig?.surveillances.Any(e => e.name == frigateEvent.before?.camera) == true)
+            else if(applicationConfig?.cameras.Where(e => e.isSurveillance).Any(e => e.name == frigateEvent.before?.camera) == true)
             {
                 if(houseManager.Security.State == HouseSecurityState.NIGHT)
                 {

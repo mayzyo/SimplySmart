@@ -53,6 +53,8 @@ internal class FobManager : IFobManager
             fob.Initialise(serviceProvider, fobConfig.fobButtons);
             states.Add(fobConfig.name, fob);
         }
+
+        logger.LogInformation("Fobs loaded successfully in Fob Manager");
     }
 
     private static ApplicationConfig DeserialiseConfig(IDeserializer deserializer)

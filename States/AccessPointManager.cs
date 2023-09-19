@@ -41,11 +41,11 @@ internal class AccessPointManager : IAccessPointManager
 
         if (config.smartImplants != null)
         {
-            Initialise(config, serviceProvider);
+            InitialiseSmartImplant(config, serviceProvider);
         }
     }
 
-    private void Initialise(ApplicationConfig config, IServiceProvider serviceProvider)
+    private void InitialiseSmartImplant(ApplicationConfig config, IServiceProvider serviceProvider)
     {
         foreach (var smartImplant in config.smartImplants)
         {
@@ -56,6 +56,8 @@ internal class AccessPointManager : IAccessPointManager
                 states.Add(smartImplant.name, garageDoor);
             }
         }
+
+        logger.LogInformation("Smart Implants loaded successfully in Access Point Manager");
     }
 
     private static ApplicationConfig DeserialiseConfig(IDeserializer deserializer)

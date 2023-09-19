@@ -81,6 +81,7 @@ public class MqttService : IHostedService
             new MqttTopicFilterBuilder().WithTopic(IZwaveBinarySwitchHandler.MQTT_TOPIC).Build(),
             new MqttTopicFilterBuilder().WithTopic(IZwaveMultiLevelSwitchHandler.MQTT_TOPIC).Build(),
             new MqttTopicFilterBuilder().WithTopic(IZwaveCentralSceneHandler.MQTT_TOPIC).Build(),
+            new MqttTopicFilterBuilder().WithTopic(IZwaveNotificationHandler.MQTT_TOPIC).Build(),
         };
         managedMqttClient.ApplicationMessageReceivedAsync += CreateScopedMessageReceived;
 
@@ -140,6 +141,11 @@ public class MqttService : IHostedService
         else if (MqttTopicFilterComparer.Compare(topic, IZwaveCentralSceneHandler.MQTT_TOPIC) == MqttTopicFilterCompareResult.IsMatch)
         {
             IZwaveCentralSceneHandler handler = scope.ServiceProvider.GetRequiredService<IZwaveCentralSceneHandler>();
+            await handler.HandleEvent(e);
+        }
+        else if (MqttTopicFilterComparer.Compare(topic, IZwaveNotificationHandler.MQTT_TOPIC) == MqttTopicFilterCompareResult.IsMatch)
+        {
+            IZwaveNotificationHandler handler = scope.ServiceProvider.GetRequiredService<IZwaveNotificationHandler>();
             await handler.HandleEvent(e);
         }
     }

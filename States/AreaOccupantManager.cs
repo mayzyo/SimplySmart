@@ -39,34 +39,41 @@ internal class AreaOccupantManager: IAreaOccupantManager
         this.logger = logger;
         var config = DeserialiseConfig(deserializer);
 
-        if (config.areaOccupants != null)
+        if (config.cameras != null)
         {
-            Initialise(config, lightSwitchManager);
+            InitialiseCamera(config, lightSwitchManager);
+        }
+
+        if (config.multiSensors != null)
+        {
+            InitialiseMultiSensor(config, lightSwitchManager);
         }
     }
 
-    private void Initialise(ApplicationConfig config, ILightSwitchManager lightSwitchManager)
+    private void InitialiseCamera(ApplicationConfig appConfig, ILightSwitchManager lightSwitchManager)
     {
-        foreach (var areaOccupantConfig in config.areaOccupants)
+        foreach (var config in appConfig.cameras)
         {
             var areaOccupant = new AreaOccupant();
-            areaOccupant.stateMachine.Configure(AreaOccupantState.EMPTY)
-                .OnEntry(() =>
-                    lightSwitchManager[areaOccupantConfig.lightSwitch].Trigger(LightSwitchCommand.AUTO_OFF)
-                );
 
-            areaOccupant.stateMachine.Configure(AreaOccupantState.MOVING)
-                .OnEntry(() =>
-                    lightSwitchManager[areaOccupantConfig.lightSwitch].Trigger(LightSwitchCommand.AUTO_ON)
-                );
-
-            areaOccupant.stateMachine.Configure(AreaOccupantState.STATIONARY)
-                .OnEntry(
-                    () => lightSwitchManager[areaOccupantConfig.lightSwitch].Trigger(LightSwitchCommand.AUTO_ON)
-                );
-
-            states.Add(areaOccupantConfig.name, areaOccupant);
+            areaOccupant.Initialise(config.lightSwitch != default ? lightSwitchManager[config.lightSwitch] : default);
+            states.Add(config.name, areaOccupant);
         }
+
+        logger.LogInformation("Cameras loaded successfully in Area Occupant Manager");
+    }
+
+    private void InitialiseMultiSensor(ApplicationConfig appConfig, ILightSwitchManager lightSwitchManager)
+    {
+        foreach (var config in appConfig.multiSensors)
+        {
+            var areaOccupant = new AreaOccupant();
+
+            areaOccupant.Initialise(config.lightSwitch != default ? lightSwitchManager[config.lightSwitch] : default);
+            states.Add(config.name, areaOccupant);
+        }
+
+        logger.LogInformation("Multi Sensors loaded successfully in Area Occupant Manager");
     }
 
     private static ApplicationConfig DeserialiseConfig(IDeserializer deserializer)

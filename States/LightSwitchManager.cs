@@ -123,6 +123,8 @@ internal class LightSwitchManager : ILightSwitchManager
 
             states.Add(lightSwitchConfig.name, lightSwitch);
         }
+
+        logger.LogInformation("Light Switches loaded successfully in Light Switch Manager");
     }
 
     private static ApplicationConfig DeserialiseConfig(IDeserializer deserializer)

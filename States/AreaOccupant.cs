@@ -1,10 +1,8 @@
-﻿using Microsoft.Extensions.Logging;
-using Stateless;
+﻿using Stateless;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace SimplySmart.States;
 
@@ -18,12 +16,10 @@ public interface IAreaOccupant
 public class AreaOccupant : IAreaOccupant
 {
     public AreaOccupantState State { get { return stateMachine.State; } }
-    public readonly StateMachine<AreaOccupantState, AreaOccupantCommand> stateMachine;
+    public readonly StateMachine<AreaOccupantState, AreaOccupantCommand> stateMachine = new(AreaOccupantState.EMPTY);
 
-    public AreaOccupant()
+    public void Initialise()
     {
-        stateMachine = new(AreaOccupantState.EMPTY);
-
         stateMachine.Configure(AreaOccupantState.EMPTY)
             .Permit(AreaOccupantCommand.SET_MOVING, AreaOccupantState.MOVING);
 
@@ -33,6 +29,23 @@ public class AreaOccupant : IAreaOccupant
 
         stateMachine.Configure(AreaOccupantState.STATIONARY)
             .Permit(AreaOccupantCommand.SET_MOVING, AreaOccupantState.MOVING);
+    }
+
+    public void Initialise(ILightSwitch? lightSwitch)
+    {
+        Initialise();
+
+        if(lightSwitch != default)
+        {
+            stateMachine.Configure(AreaOccupantState.EMPTY)
+                .OnEntry(() => lightSwitch.Trigger(LightSwitchCommand.AUTO_OFF));
+
+            stateMachine.Configure(AreaOccupantState.MOVING)
+                .OnEntry(() => lightSwitch.Trigger(LightSwitchCommand.AUTO_ON));
+
+            stateMachine.Configure(AreaOccupantState.STATIONARY)
+                .OnEntry(() => lightSwitch.Trigger(LightSwitchCommand.AUTO_ON));
+        }
     }
 
     public void Trigger(AreaOccupantCommand command)
