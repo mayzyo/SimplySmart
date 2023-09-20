@@ -47,7 +47,12 @@ internal class LightSwitchManager : ILightSwitchManager
 
         if (config.lightSwitches != null)
         {
-            Initialise(serviceProvider, config);
+            InitialiseLightSwitch(serviceProvider, config);
+        }
+
+        if (config.powerSwitches != null)
+        {
+            InitialisePowerSwitch(serviceProvider, config);
         }
     }
 
@@ -66,15 +71,15 @@ internal class LightSwitchManager : ILightSwitchManager
         return states.ContainsKey(key);
     }
 
-    private void Initialise(IServiceProvider serviceProvider, ApplicationConfig config)
+    private void InitialiseLightSwitch(IServiceProvider serviceProvider, ApplicationConfig appConfig)
     {
-        foreach (var lightSwitchConfig in config.lightSwitches)
+        foreach (var config in appConfig.lightSwitches)
         {
             LightSwitch lightSwitch;
 
-            if(lightSwitchConfig.isDimmer == true)
+            if(config.isDimmer == true)
             {
-                var dimmerLightSwitch = new DimmerLightSwitch(lightSwitchConfig.stayOn);
+                var dimmerLightSwitch = new DimmerLightSwitch(config.stayOn);
 
                 dimmerLightSwitch.stateMachine.Configure(LightSwitchState.MANUAL_ON)
                     .OnEntryAsync(async () =>
@@ -84,12 +89,12 @@ internal class LightSwitchManager : ILightSwitchManager
                         if(dimmerLightSwitch.Source == BroadcastSource.ZWAVE)
                         {
                             IHomebridgeLightSwitchHandler homebridgeHandler = scope.ServiceProvider.GetRequiredService<IHomebridgeLightSwitchHandler>();
-                            await homebridgeHandler.HandleOn(lightSwitchConfig.name, dimmerLightSwitch.Brightness);
+                            await homebridgeHandler.HandleOn(config.name, dimmerLightSwitch.Brightness);
                         }
                         else if(dimmerLightSwitch.Source == BroadcastSource.HOMEBRIDGE)
                         {
                             IZwaveMultiLevelSwitchHandler zwaveHandler = scope.ServiceProvider.GetRequiredService<IZwaveMultiLevelSwitchHandler>();
-                            await zwaveHandler.HandleOn(lightSwitchConfig.name, dimmerLightSwitch.Brightness);
+                            await zwaveHandler.HandleOn(config.name, dimmerLightSwitch.Brightness);
                         }
                     })
                     .PermitReentryIf(LightSwitchCommand.MANUAL_ON, dimmerLightSwitch.LevelChange);
@@ -98,7 +103,7 @@ internal class LightSwitchManager : ILightSwitchManager
             }
             else
             {
-                lightSwitch = new LightSwitch(lightSwitchConfig.stayOn);
+                lightSwitch = new LightSwitch(config.stayOn);
 
                 lightSwitch.stateMachine.Configure(LightSwitchState.ON)
                     .OnEntryAsync(async () =>
@@ -106,8 +111,8 @@ internal class LightSwitchManager : ILightSwitchManager
                         using var scope = serviceProvider.CreateScope();
                         IZwaveBinarySwitchHandler zwaveHandler = scope.ServiceProvider.GetRequiredService<IZwaveBinarySwitchHandler>();
                         IHomebridgeLightSwitchHandler homebridgeHandler = scope.ServiceProvider.GetRequiredService<IHomebridgeLightSwitchHandler>();
-                        await zwaveHandler.HandleOn(lightSwitchConfig.name);
-                        await homebridgeHandler.HandleOn(lightSwitchConfig.name);
+                        await zwaveHandler.HandleOn(config.name);
+                        await homebridgeHandler.HandleOn(config.name);
                     });
             }
 
@@ -117,14 +122,46 @@ internal class LightSwitchManager : ILightSwitchManager
                     using var scope = serviceProvider.CreateScope();
                     IZwaveBinarySwitchHandler zwaveHandler = scope.ServiceProvider.GetRequiredService<IZwaveBinarySwitchHandler>();
                     IHomebridgeLightSwitchHandler homebridgeHandler = scope.ServiceProvider.GetRequiredService<IHomebridgeLightSwitchHandler>();
-                    await zwaveHandler.HandleOff(lightSwitchConfig.name);
-                    await homebridgeHandler.HandleOff(lightSwitchConfig.name);
+                    await zwaveHandler.HandleOff(config.name);
+                    await homebridgeHandler.HandleOff(config.name);
                 });
 
-            states.Add(lightSwitchConfig.name, lightSwitch);
+            states.Add(config.name, lightSwitch);
         }
 
         logger.LogInformation("Light Switches loaded successfully in Light Switch Manager");
+    }
+
+    private void InitialisePowerSwitch(IServiceProvider serviceProvider, ApplicationConfig appConfig)
+    {
+        foreach (var config in appConfig.powerSwitches.Where(e => e.type == "light"))
+        {
+            var lightSwitch = new LightSwitch(null);
+
+            lightSwitch.stateMachine.Configure(LightSwitchState.ON)
+                .OnEntryAsync(async () =>
+                {
+                    using var scope = serviceProvider.CreateScope();
+                    IZwaveBinarySwitchHandler zwaveHandler = scope.ServiceProvider.GetRequiredService<IZwaveBinarySwitchHandler>();
+                    IHomebridgeLightSwitchHandler homebridgeHandler = scope.ServiceProvider.GetRequiredService<IHomebridgeLightSwitchHandler>();
+                    await zwaveHandler.HandleOn(config.name);
+                    await homebridgeHandler.HandleOn(config.name);
+                });
+
+            lightSwitch.stateMachine.Configure(LightSwitchState.OFF)
+                .OnEntryAsync(async () =>
+                {
+                    using var scope = serviceProvider.CreateScope();
+                    IZwaveBinarySwitchHandler zwaveHandler = scope.ServiceProvider.GetRequiredService<IZwaveBinarySwitchHandler>();
+                    IHomebridgeLightSwitchHandler homebridgeHandler = scope.ServiceProvider.GetRequiredService<IHomebridgeLightSwitchHandler>();
+                    await zwaveHandler.HandleOff(config.name);
+                    await homebridgeHandler.HandleOff(config.name);
+                });
+
+            states.Add(config.name, lightSwitch);
+
+            logger.LogInformation("Power Switches loaded successfully in Light Switch Manager");
+        }
     }
 
     private static ApplicationConfig DeserialiseConfig(IDeserializer deserializer)

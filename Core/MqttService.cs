@@ -78,6 +78,7 @@ public class MqttService : IHostedService
             new MqttTopicFilterBuilder().WithTopic("homebridge/switch/+/setOn").Build(),
             new MqttTopicFilterBuilder().WithTopic("homebridge/security/setTargetState").Build(),
             new MqttTopicFilterBuilder().WithTopic(IHomebridgeGarageDoorOpenerHandler.MQTT_TOPIC).Build(),
+            new MqttTopicFilterBuilder().WithTopic(IHomebridgeHeaterCoolerHandler.MQTT_TOPIC).Build(),
             new MqttTopicFilterBuilder().WithTopic(IZwaveBinarySwitchHandler.MQTT_TOPIC).Build(),
             new MqttTopicFilterBuilder().WithTopic(IZwaveMultiLevelSwitchHandler.MQTT_TOPIC).Build(),
             new MqttTopicFilterBuilder().WithTopic(IZwaveCentralSceneHandler.MQTT_TOPIC).Build(),
@@ -126,6 +127,11 @@ public class MqttService : IHostedService
         else if (MqttTopicFilterComparer.Compare(topic, IHomebridgeGarageDoorOpenerHandler.MQTT_TOPIC) == MqttTopicFilterCompareResult.IsMatch)
         {
             IHomebridgeGarageDoorOpenerHandler handler = scope.ServiceProvider.GetRequiredService<IHomebridgeGarageDoorOpenerHandler>();
+            await handler.HandleEvent(e);
+        }
+        else if (MqttTopicFilterComparer.Compare(topic, IHomebridgeHeaterCoolerHandler.MQTT_TOPIC) == MqttTopicFilterCompareResult.IsMatch)
+        {
+            IHomebridgeHeaterCoolerHandler handler = scope.ServiceProvider.GetRequiredService<IHomebridgeHeaterCoolerHandler>();
             await handler.HandleEvent(e);
         }
         else if (MqttTopicFilterComparer.Compare(topic, IZwaveBinarySwitchHandler.MQTT_TOPIC) == MqttTopicFilterCompareResult.IsMatch)

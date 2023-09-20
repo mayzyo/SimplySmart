@@ -43,6 +43,7 @@ Host.CreateDefaultBuilder(args)
         services.AddSingleton<ILightSwitchManager, LightSwitchManager>();
         services.AddSingleton<IAreaOccupantManager, AreaOccupantManager>();
         services.AddSingleton<IAccessPointManager, AccessPointManager>();
+        services.AddSingleton<IApplianceManager, ApplianceManager>();
         services.AddSingleton<IFobManager, FobManager>();
         services.AddSingleton<IHouseManager, HouseManager>();
 
@@ -58,6 +59,7 @@ Host.CreateDefaultBuilder(args)
         services.AddTransient<IHomebridgeSwitchHandler, HomebridgeSwitchHandler>();
         services.AddTransient<IHomebridgeSecurityHandler, HomebridgeSecurityHandler>();
         services.AddTransient<IHomebridgeGarageDoorOpenerHandler, HomebridgeGarageDoorOpenerHandler>();
+        services.AddTransient<IHomebridgeHeaterCoolerHandler, HomebridgeHeaterCoolerHandler>();
     })
     .Build()
     .Run();

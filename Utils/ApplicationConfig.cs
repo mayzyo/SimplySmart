@@ -18,6 +18,8 @@ public class ApplicationConfig
     public List<Fob> fobs { get; set; }
 
     public List<MultiSensor> multiSensors { get; set; }
+
+    public List<PowerSwitch> powerSwitches { get; set; }
 }
 
 public class Camera
@@ -63,4 +65,11 @@ public class MultiSensor
     public string name { get; set; }
 
     public string? lightSwitch { get; set; }
+}
+
+public class PowerSwitch
+{
+    public string name { get; set; }
+
+    public string type { get; set; }
 }

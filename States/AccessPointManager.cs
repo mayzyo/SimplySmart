@@ -45,16 +45,13 @@ internal class AccessPointManager : IAccessPointManager
         }
     }
 
-    private void InitialiseSmartImplant(ApplicationConfig config, IServiceProvider serviceProvider)
+    private void InitialiseSmartImplant(ApplicationConfig appConfig, IServiceProvider serviceProvider)
     {
-        foreach (var smartImplant in config.smartImplants)
+        foreach (var config in appConfig.smartImplants.Where(e => e.type == "garageDoor"))
         {
-            if(smartImplant.type == "garageDoor")
-            {
-                var garageDoor = new GarageDoor(smartImplant.name);
-                garageDoor.Initialise(serviceProvider);
-                states.Add(smartImplant.name, garageDoor);
-            }
+            var garageDoor = new GarageDoor(config.name);
+            garageDoor.Initialise(serviceProvider);
+            states.Add(config.name, garageDoor);
         }
 
         logger.LogInformation("Smart Implants loaded successfully in Access Point Manager");
