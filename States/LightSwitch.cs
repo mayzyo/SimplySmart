@@ -1,4 +1,5 @@
-﻿using Stateless;
+﻿using SimplySmart.Utils;
+using Stateless;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +14,7 @@ public interface ILightSwitch
 {
     LightSwitchState State { get; }
 
-    void Trigger(LightSwitchCommand command);
+    void Trigger(LightSwitchCommand command, BroadcastSource source);
 
     bool IsInState(LightSwitchState state);
 }
@@ -25,6 +26,9 @@ public class LightSwitch : ILightSwitch
     public LightSwitchState State { get { return stateMachine.State; } }
     public readonly StateMachine<LightSwitchState, LightSwitchCommand> stateMachine;
     private readonly Timer? triggerDelayTimer;
+    protected BroadcastSource source;
+
+    public BroadcastSource Source { get { return source; } }
 
     public LightSwitch(int? stayOn)
     {
@@ -67,8 +71,9 @@ public class LightSwitch : ILightSwitch
             .Permit(LightSwitchCommand.DISABLE_AUTO, LightSwitchState.MANUAL_ON);
     }
 
-    public void Trigger(LightSwitchCommand command)
+    public void Trigger(LightSwitchCommand command, BroadcastSource source)
     {
+        this.source = source;
         stateMachine.FireAsync(command);
     }
 

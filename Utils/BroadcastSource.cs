@@ -8,7 +8,7 @@ namespace SimplySmart.Utils;
 
 public enum BroadcastSource
 {
-    FRIGATE,
+    EXTERNAL,
     ZWAVE,
     HOMEBRIDGE
 }

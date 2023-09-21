@@ -60,6 +60,7 @@ Host.CreateDefaultBuilder(args)
         services.AddTransient<IHomebridgeSecurityHandler, HomebridgeSecurityHandler>();
         services.AddTransient<IHomebridgeGarageDoorOpenerHandler, HomebridgeGarageDoorOpenerHandler>();
         services.AddTransient<IHomebridgeHeaterCoolerHandler, HomebridgeHeaterCoolerHandler>();
+        services.AddTransient<IHomebridgeFanHandler, HomebridgeFanHandler>();
     })
     .Build()
     .Run();

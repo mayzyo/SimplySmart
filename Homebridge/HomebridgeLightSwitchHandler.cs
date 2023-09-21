@@ -110,11 +110,11 @@ internal class HomebridgeLightSwitchHandler : IHomebridgeLightSwitchHandler
         {
             if (isOn)
             {
-                lightSwitchManager[name].Trigger(LightSwitchCommand.MANUAL_ON);
+                lightSwitchManager[name].Trigger(LightSwitchCommand.MANUAL_ON, BroadcastSource.HOMEBRIDGE);
             }
             else
             {
-                lightSwitchManager[name].Trigger(LightSwitchCommand.MANUAL_OFF);
+                lightSwitchManager[name].Trigger(LightSwitchCommand.MANUAL_OFF, BroadcastSource.HOMEBRIDGE);
             }
         }
     }

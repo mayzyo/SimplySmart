@@ -47,11 +47,18 @@ internal class ApplianceManager : IApplianceManager
 
     private void InitialisePowerSwitch(ApplicationConfig appConfig, IServiceProvider serviceProvider)
     {
-        foreach (var config in appConfig.powerSwitches.Where(e => e.type == "appliance"))
+        foreach (var config in appConfig.powerSwitches.Where(e => e.type == "electricBlanket"))
         {
             var electricBlanket = new ElectricBlanket(config.name);
             electricBlanket.Initialise(serviceProvider);
             states.Add(config.name, electricBlanket);
+        }
+
+        foreach (var config in appConfig.powerSwitches.Where(e => e.type == "fan"))
+        {
+            var fan = new Fan(config.name);
+            fan.Initialise(serviceProvider);
+            states.Add(config.name, fan);
         }
 
         logger.LogInformation("Power Switches loaded successfully in Appliance Manager");

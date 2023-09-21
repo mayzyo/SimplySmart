@@ -89,7 +89,7 @@ internal class ZwaveLightSwitchHandler : IZwaveLightSwitchHandler
 
             if (dimmerSwitch.value == 0)
             {
-                dimmer.Trigger(LightSwitchCommand.MANUAL_OFF);
+                dimmer.Trigger(LightSwitchCommand.MANUAL_OFF, BroadcastSource.ZWAVE);
             }
             else if(dimmer.IsInState(LightSwitchState.OFF) || dimmerSwitch.value != dimmer.Brightness)
             {
@@ -102,11 +102,11 @@ internal class ZwaveLightSwitchHandler : IZwaveLightSwitchHandler
     {
         if (isOn)
         {
-            lightSwitchManager[name].Trigger(LightSwitchCommand.MANUAL_ON);
+            lightSwitchManager[name].Trigger(LightSwitchCommand.MANUAL_ON, BroadcastSource.ZWAVE);
         }
         else
         {
-            lightSwitchManager[name].Trigger(LightSwitchCommand.MANUAL_OFF);
+            lightSwitchManager[name].Trigger(LightSwitchCommand.MANUAL_OFF, BroadcastSource.ZWAVE);
         }
     }
 

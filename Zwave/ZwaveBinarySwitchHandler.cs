@@ -1,9 +1,9 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Extensions.ManagedClient;
 using SimplySmart.States;
+using SimplySmart.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -74,11 +74,11 @@ internal class ZwaveBinarySwitchHandler : IZwaveBinarySwitchHandler
 
         if (binarySwitch.value == true)
         {
-            lightSwitchManager[name].Trigger(LightSwitchCommand.MANUAL_ON);
+            lightSwitchManager[name].Trigger(LightSwitchCommand.MANUAL_ON, BroadcastSource.ZWAVE);
         }
         else
         {
-            lightSwitchManager[name].Trigger(LightSwitchCommand.MANUAL_OFF);
+            lightSwitchManager[name].Trigger(LightSwitchCommand.MANUAL_OFF, BroadcastSource.ZWAVE);
         }
     }
 

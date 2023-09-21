@@ -64,7 +64,7 @@ internal class ZwaveMultiLevelSwitchHandler : IZwaveMultiLevelSwitchHandler
 
         if (dimmerSwitch.value == 0)
         {
-            dimmer.Trigger(LightSwitchCommand.MANUAL_OFF);
+            dimmer.Trigger(LightSwitchCommand.MANUAL_OFF, BroadcastSource.ZWAVE);
         }
         else if (dimmer.IsInState(LightSwitchState.OFF) || dimmerSwitch.value != dimmer.Brightness)
         {

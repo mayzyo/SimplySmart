@@ -1,4 +1,5 @@
-﻿using Stateless;
+﻿using SimplySmart.Utils;
+using Stateless;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,13 +39,13 @@ public class AreaOccupant : IAreaOccupant
         if(lightSwitch != default)
         {
             stateMachine.Configure(AreaOccupantState.EMPTY)
-                .OnEntry(() => lightSwitch.Trigger(LightSwitchCommand.AUTO_OFF));
+                .OnEntry(() => lightSwitch.Trigger(LightSwitchCommand.AUTO_OFF, BroadcastSource.EXTERNAL));
 
             stateMachine.Configure(AreaOccupantState.MOVING)
-                .OnEntry(() => lightSwitch.Trigger(LightSwitchCommand.AUTO_ON));
+                .OnEntry(() => lightSwitch.Trigger(LightSwitchCommand.AUTO_ON, BroadcastSource.EXTERNAL));
 
             stateMachine.Configure(AreaOccupantState.STATIONARY)
-                .OnEntry(() => lightSwitch.Trigger(LightSwitchCommand.AUTO_ON));
+                .OnEntry(() => lightSwitch.Trigger(LightSwitchCommand.AUTO_ON, BroadcastSource.EXTERNAL));
         }
     }
 

@@ -21,9 +21,7 @@ public class DimmerLightSwitch : LightSwitch, IDimmerLightSwitch
 {
     private ushort brightness = 0;
     private ushort prevBrightness = 0;
-    private BroadcastSource source;
 
-    public BroadcastSource Source { get { return source; } }
     public ushort Brightness { get { return brightness; } }
     public ushort PrevBrightness { get { return prevBrightness; } }
 
@@ -36,8 +34,7 @@ public class DimmerLightSwitch : LightSwitch, IDimmerLightSwitch
     {
         prevBrightness = this.brightness;
         this.brightness = brightness;
-        this.source = source;
-        Trigger(command);
+        Trigger(command, source);
     }
 
     public bool LevelChange()
