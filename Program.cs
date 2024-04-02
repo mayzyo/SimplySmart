@@ -17,6 +17,7 @@ using SimplySmart.Core.Models;
 using SimplySmart.Zwave.EventHandling;
 using SimplySmart.Core.Services;
 
+// Reference: https://code-maze.com/dotnet-factory-pattern-dependency-injection/
 
 Console.WriteLine("Simply Smart - Welcome");
 
@@ -42,14 +43,7 @@ Host.CreateDefaultBuilder(args)
             return mqttFactory.CreateManagedMqttClient();
         });
         services.AddHostedService<EventBusService>();
-
-        services.AddTransient<ILightSwitchService, LightSwitchService>();
-        services.AddTransient<IAccessPointService, AccessPointService>();
-        services.AddTransient<IApplianceService, ApplianceService>();
-        services.AddTransient<IFobService, FobService>();
-
-        services.AddTransient<IAreaOccupantService, AreaOccupantService>();
-        services.AddTransient<IHouseService, HouseService>();
+        services.AddSingleton<IStateStorageService, StateStorageService>();
 
         services.AddTransient<IFrigateEventHandler, FrigateEventHandler>();
         services.AddTransient<IPersonEventHandler, PersonEventHandler>();
@@ -67,6 +61,13 @@ Host.CreateDefaultBuilder(args)
         services.AddTransient<IFanEventHandler, FanEventHandler>();
         services.AddTransient<IHomebridgeEventSender, HomebridgeEventSender>();
 
+        services.AddTransient<ILightSwitchService, LightSwitchService>();
+        services.AddTransient<IAccessPointService, AccessPointService>();
+        services.AddTransient<IApplianceService, ApplianceService>();
+        services.AddTransient<IFobService, FobService>();
+
+        services.AddTransient<IAreaOccupantService, AreaOccupantService>();
+        services.AddTransient<IHouseService, HouseService>();
     })
     .Build()
     .Run();
