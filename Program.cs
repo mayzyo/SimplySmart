@@ -4,14 +4,19 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MQTTnet;
 using MQTTnet.Extensions.ManagedClient;
-using SimplySmart.Core;
-using SimplySmart.Frigate;
-using SimplySmart.Homebridge;
-using SimplySmart.Nodemation;
-using SimplySmart.States;
-using SimplySmart.Zwave;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
+using SimplySmart.DeviceStates.Services;
+using SimplySmart.Homebridge.EventHandling;
+using SimplySmart.Homebridge.Services;
+using SimplySmart.Zwave.Services;
+using SimplySmart.Core.Extensions;
+using System;
+using System.Resources;
+using SimplySmart.HouseStates.Services;
+using SimplySmart.Frigate.EventHandling;
+using SimplySmart.Core.Models;
+using SimplySmart.Zwave.EventHandling;
+using SimplySmart.Core.Services;
+
 
 Console.WriteLine("Simply Smart - Welcome");
 
@@ -24,43 +29,44 @@ Host.CreateDefaultBuilder(args)
     })
     .ConfigureAppConfiguration(builder =>
     {
-        builder.AddEnvironmentVariables();
+        var path = Environment.GetEnvironmentVariable("CONFIG_FILE_PATH") ?? throw new Exception("Config file missing!");
+        builder.AddEnvironmentVariables().AddYamlFile(path);
     })
     .ConfigureServices(services =>
     {
+        services.AddOptions<ApplicationConfig>().BindConfiguration("CONFIG_YAML");
+
         services.AddSingleton(sp =>
         {
             var mqttFactory = new MqttFactory();
             return mqttFactory.CreateManagedMqttClient();
         });
-        services.AddHostedService<MqttService>();
+        services.AddHostedService<EventBusService>();
 
-        var deserializer = new DeserializerBuilder()
-            .WithNamingConvention(CamelCaseNamingConvention.Instance)
-            .Build();
+        services.AddTransient<ILightSwitchService, LightSwitchService>();
+        services.AddTransient<IAccessPointService, AccessPointService>();
+        services.AddTransient<IApplianceService, ApplianceService>();
+        services.AddTransient<IFobService, FobService>();
 
-        services.AddSingleton(deserializer);
-        services.AddSingleton<ILightSwitchManager, LightSwitchManager>();
-        services.AddSingleton<IAreaOccupantManager, AreaOccupantManager>();
-        services.AddSingleton<IAccessPointManager, AccessPointManager>();
-        services.AddSingleton<IApplianceManager, ApplianceManager>();
-        services.AddSingleton<IFobManager, FobManager>();
-        services.AddSingleton<IHouseManager, HouseManager>();
+        services.AddTransient<IAreaOccupantService, AreaOccupantService>();
+        services.AddTransient<IHouseService, HouseService>();
 
         services.AddTransient<IFrigateEventHandler, FrigateEventHandler>();
-        services.AddTransient<IFrigateAreaHandler, FrigateAreaHandler>();
-        services.AddTransient<INodemationDaylightHandler, NodemationDaylightHandler>();
-        services.AddTransient<IZwaveBinarySwitchHandler, ZwaveBinarySwitchHandler>();
-        services.AddTransient<IZwaveMultiLevelSwitchHandler, ZwaveMultiLevelSwitchHandler>();
-        services.AddTransient<IZwaveCentralSceneHandler, ZwaveCentralSceneHandler>();
-        services.AddTransient<IZwaveNotificationHandler, ZwaveNotificationHandler>();
+        services.AddTransient<IPersonEventHandler, PersonEventHandler>();
 
-        services.AddTransient<IHomebridgeLightSwitchHandler, HomebridgeLightSwitchHandler>();
-        services.AddTransient<IHomebridgeSwitchHandler, HomebridgeSwitchHandler>();
-        services.AddTransient<IHomebridgeSecurityHandler, HomebridgeSecurityHandler>();
-        services.AddTransient<IHomebridgeGarageDoorOpenerHandler, HomebridgeGarageDoorOpenerHandler>();
-        services.AddTransient<IHomebridgeHeaterCoolerHandler, HomebridgeHeaterCoolerHandler>();
-        services.AddTransient<IHomebridgeFanHandler, HomebridgeFanHandler>();
+        services.AddTransient<IBinarySwitchEventHandler, BinarySwitchEventHandler>();
+        services.AddTransient<IMultiLevelSwitchEventHandler, MultiLevelSwitchEventHandler>();
+        services.AddTransient<ICentralSceneEventHandler, CentralSceneEventHandler>();
+        services.AddTransient<INotificationEventHandler, NotificationEventHandler>();
+        services.AddTransient<IZwaveEventSender, ZwaveEventSender>();
+
+        services.AddTransient<ILightSwitchEventHandler, LightSwitchEventHandler>();
+        services.AddTransient<ISwitchEventHandler, SwitchEventHandler>();
+        services.AddTransient<ISecurityEventHandler, SecurityEventHandler>();
+        services.AddTransient<IGarageDoorOpenerEventHandler, GarageDoorOpenerEventHandler>();
+        services.AddTransient<IFanEventHandler, FanEventHandler>();
+        services.AddTransient<IHomebridgeEventSender, HomebridgeEventSender>();
+
     })
     .Build()
     .Run();
