@@ -5,6 +5,8 @@ VisualStudioVersion = 17.5.33502.453
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimplySmart", "SimplySmart.csproj", "{57D513FF-93C2-4D75-9004-2C763A8C07F9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimplySmart.Tests", "SimplySmart.Tests\SimplySmart.Tests.csproj", "{9A384C6F-7ACA-4CDC-AEF9-8133C804EFDB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{57D513FF-93C2-4D75-9004-2C763A8C07F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{57D513FF-93C2-4D75-9004-2C763A8C07F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{57D513FF-93C2-4D75-9004-2C763A8C07F9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A384C6F-7ACA-4CDC-AEF9-8133C804EFDB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A384C6F-7ACA-4CDC-AEF9-8133C804EFDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A384C6F-7ACA-4CDC-AEF9-8133C804EFDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A384C6F-7ACA-4CDC-AEF9-8133C804EFDB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

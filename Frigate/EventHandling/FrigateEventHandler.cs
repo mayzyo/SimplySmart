@@ -11,6 +11,9 @@ using SimplySmart.HouseStates.Services;
 using Microsoft.Extensions.Options;
 using SimplySmart.Core.Services;
 using SimplySmart.Core.Models;
+using SimplySmart.Core.Extensions;
+using SimplySmart.Zwave.Models;
+using SimplySmart.HouseStates.Features;
 
 namespace SimplySmart.Frigate.EventHandling;
 
@@ -35,29 +38,13 @@ public class FrigateEventHandler(ILogger<FrigateEventHandler> logger, IOptions<A
             return;
         }
 
-        var message = e.ApplicationMessage.ConvertPayloadToString();
-        var frigateEvent = DeserialiseEvent(message);
-        if (frigateEvent == null)
+        if (!e.ApplicationMessage.DeserialiseMessage(out FrigateEvent? frigateEvent, out string message) || frigateEvent == default)
         {
-            logger.LogError("message JSON was empty");
+            logger.LogError("message not in JSON format.");
             return;
         }
 
         await PassthroughEvents(frigateEvent, message);
-    }
-
-    private FrigateEvent? DeserialiseEvent(string message)
-    {
-        try
-        {
-            return JsonSerializer.Deserialize<FrigateEvent>(message);
-        }
-        catch
-        {
-            logger.LogError("message not in JSON format.");
-        }
-
-        return null;
     }
 
     private async Task PassthroughEvents(FrigateEvent frigateEvent, string message)

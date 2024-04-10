@@ -1,4 +1,4 @@
-﻿using SimplySmart.Core.Services;
+﻿using SimplySmart.Core.Abstractions;
 using SimplySmart.Homebridge.Services;
 using Stateless;
 using System;
@@ -7,38 +7,35 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SimplySmart.HouseStates.Services;
+namespace SimplySmart.HouseStates.Features;
 
 public interface IHouseSecurity
 {
     HouseSecurityState State { get; }
-
+    IHouseSecurity Connect();
+    void Publish();
     void Trigger(HouseSecurityCommand command);
 }
 
-internal class HouseSecurity : IHouseSecurity
+internal class HouseSecurity(IStateStorageService stateStorageService, IHomebridgeEventSender homebridgeEventSender) : IHouseSecurity
 {
     public HouseSecurityState State { get { return stateMachine.State; } }
-    public readonly StateMachine<HouseSecurityState, HouseSecurityCommand> stateMachine;
-    readonly IHomebridgeEventSender homebridgeEventSender;
-
-    public HouseSecurity(IStateStorageService stateStorageService, IHomebridgeEventSender homebridgeEventSender)
-    {
-        this.homebridgeEventSender = homebridgeEventSender;
-        stateMachine = new(
-            () =>
+    public readonly StateMachine<HouseSecurityState, HouseSecurityCommand> stateMachine = new(
+        () =>
+        {
+            var stateString = stateStorageService.GetState("house_security");
+            if (Enum.TryParse(stateString, out HouseSecurityState state))
             {
-                var state = stateStorageService.GetState("house_security");
-                if (Enum.TryParse(state, out HouseSecurityState myStatus))
-                {
-                    return myStatus;
-                }
+                return state;
+            }
 
-                return HouseSecurityState.OFF;
-            },
-            s => stateStorageService.UpdateState("house_security", s.ToString())
-        );
+            return HouseSecurityState.OFF;
+        },
+        s => stateStorageService.UpdateState("house_security", s.ToString())
+    );
 
+    public IHouseSecurity Connect()
+    {
         stateMachine.OnTransitionedAsync(Transitioned);
 
         stateMachine.Configure(HouseSecurityState.OFF)
@@ -60,6 +57,13 @@ internal class HouseSecurity : IHouseSecurity
             .Permit(HouseSecurityCommand.NIGHT, HouseSecurityState.NIGHT)
             .Permit(HouseSecurityCommand.AWAY, HouseSecurityState.AWAY)
             .Permit(HouseSecurityCommand.OFF, HouseSecurityState.OFF);
+
+        return this;
+    }
+
+    public void Publish()
+    {
+        stateMachine.Activate();
     }
 
     public void Trigger(HouseSecurityCommand command)

@@ -15,20 +15,12 @@ public interface IFanEventHandler
     Task Handle(MqttApplicationMessageReceivedEventArgs e);
 }
 
-internal class FanEventHandler(IApplianceService applianceService) : IFanEventHandler
+internal class FanEventHandler(IFanService fanService) : IFanEventHandler
 {
     public async Task Handle(MqttApplicationMessageReceivedEventArgs e)
     {
         var name = e.ApplicationMessage.Topic.Replace("homebridge/fan/", "").Replace("/on", "");
         var message = e.ApplicationMessage.ConvertPayloadToString();
-
-        await UpdateState(name, message);
-    }
-
-    private async Task UpdateState(string name, string message)
-    {
-        var command = message == "true" ? ApplianceCommand.ON : ApplianceCommand.OFF;
-        var fan = (IFan)applianceService[name];
-        await fan.Trigger(command);
+        fanService[name]?.SetToOn(message == "true");
     }
 }

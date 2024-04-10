@@ -9,17 +9,17 @@ public class ApplicationConfig
 {
     public string version { get; set; }
 
-    public List<Camera> cameras { get; set; }
+    public virtual List<Camera> cameras { get; set; }
 
-    public List<LightSwitch> lightSwitches { get; set; }
+    public virtual List<LightSwitch> lightSwitches { get; set; }
 
-    public List<SmartImplant> smartImplants { get; set; }
+    public virtual List<SmartImplant> smartImplants { get; set; }
 
-    public List<Fob> fobs { get; set; }
+    public virtual List<Fob> fobs { get; set; }
 
-    public List<MultiSensor> multiSensors { get; set; }
+    public virtual List<MultiSensor> multiSensors { get; set; }
 
-    public List<PowerSwitch> powerSwitches { get; set; }
+    public virtual List<PowerSwitch> powerSwitches { get; set; }
 }
 
 public class Camera

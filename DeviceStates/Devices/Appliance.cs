@@ -4,20 +4,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SimplySmart.DeviceStates.Services;
+namespace SimplySmart.DeviceStates.Devices;
 
-public interface IAccessPoint
+public interface IAppliance
 {
 
 }
 
-public enum AccessPointState
+public enum ApplianceState
 {
     ON,
     OFF
 }
 
-public enum AccessPointCommand
+public enum ApplianceCommand
 {
     ON,
     OFF

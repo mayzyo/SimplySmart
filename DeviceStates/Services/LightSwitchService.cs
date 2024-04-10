@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SimplySmart.Core.Models;
+using SimplySmart.DeviceStates.Devices;
 using SimplySmart.DeviceStates.Factories;
 using System;
 using System.Collections.Generic;
@@ -12,90 +13,140 @@ namespace SimplySmart.DeviceStates.Services;
 
 public interface ILightSwitchService
 {
-    ILightSwitch this[string key] { get; }
-
-    void All(LightSwitchCommand command);
-
-    bool Exists(string key);
+    ILightSwitch? this[string key] { get; }
+    void PublishAll();
+    void SetAllToAuto(bool command);
 }
 
-internal class LightSwitchService : ILightSwitchService
+internal class LightSwitchService(IOptions<ApplicationConfig> options, ILogger logger, ILightSwitchFactory lightSwitchFactory) : ILightSwitchService
 {
-    public ILightSwitch this[string key]
+    public ILightSwitch? this[string key]
     {
         get
         {
-            if (!states.TryGetValue(key, out ILightSwitch? value))
+            if (TryGetLightSwitch(key, out Core.Models.LightSwitch? lightSwitch) && lightSwitch != null)
             {
-                throw new Exception($"Light Switch with {key} does not exist");
+                if(lightSwitch.isDimmer == true)
+                {
+                    return lightSwitchFactory.CreateDimmerLightSwitch(lightSwitch, lightSwitch.stayOn);
+                } else
+                {
+                    return lightSwitchFactory.CreateLightSwitch(lightSwitch, lightSwitch.stayOn);
+                }
             }
 
-            return value;
-        }
-    }
-
-    private readonly ILogger<LightSwitchService> logger;
-    private readonly Dictionary<string, ILightSwitch> states = [];
-
-    public LightSwitchService(IOptions<ApplicationConfig> options, ILogger<LightSwitchService> logger, ILightSwitchFactory lightSwitchFactory)
-    {
-        this.logger = logger;
-
-        if (options.Value.lightSwitches != null)
-        {
-            InitialiseLightSwitch(lightSwitchFactory, options.Value);
-        }
-
-        if (options.Value.powerSwitches != null)
-        {
-            InitialisePowerSwitch(lightSwitchFactory, options.Value);
-        }
-    }
-
-    public void All(LightSwitchCommand command)
-    {
-        logger.LogInformation("All light switch triggered");
-
-        foreach (var state in states)
-        {
-            state.Value.Trigger(command, BroadcastSource.EXTERNAL);
-        }
-    }
-
-    public bool Exists(string key)
-    {
-        return states.ContainsKey(key);
-    }
-
-    private void InitialiseLightSwitch(ILightSwitchFactory lightSwitchFactory, ApplicationConfig appConfig)
-    {
-        foreach (var config in appConfig.lightSwitches)
-        {
-            ILightSwitch lightSwitch;
-
-            if (config.isDimmer == true)
+            if (TryGetPowerSwitch(key, out Core.Models.PowerSwitch? powerSwitch) && powerSwitch != null)
             {
-                lightSwitch = lightSwitchFactory.CreateDimmerLightSwitch(config.name, config.stayOn);
+                return lightSwitchFactory.CreateLightSwitch(powerSwitch, null);
+            }
+
+            logger.LogError($"Light Switch with {key} does not exist");
+            return null;
+        }
+    }
+
+    public void PublishAll()
+    {
+        foreach (var lightSwitch in GetAllLightSwitch())
+        {
+            if (lightSwitch.isDimmer == true)
+            {
+                lightSwitchFactory.CreateDimmerLightSwitch(lightSwitch, lightSwitch.stayOn).Publish();
             }
             else
             {
-                lightSwitch = lightSwitchFactory.CreateLightSwitch(config.name, config.stayOn);
+                lightSwitchFactory.CreateLightSwitch(lightSwitch, lightSwitch.stayOn).Publish();
             }
-
-            states.Add(config.name, lightSwitch);
         }
 
-        logger.LogInformation("Light Switches loaded successfully in Light Switch Service");
+        foreach (var powerSwitch in GetAllPowerSwitch())
+        {
+            lightSwitchFactory.CreateLightSwitch(powerSwitch, null).Publish();
+        }
     }
 
-    private void InitialisePowerSwitch(ILightSwitchFactory lightSwitchFactory, ApplicationConfig appConfig)
+    public void SetAllToAuto(bool command)
     {
-        foreach (var config in appConfig.powerSwitches.Where(e => e.type == "light"))
-        {
-            var lightSwitch = lightSwitchFactory.CreateLightSwitch(config.name, null);
-            states.Add(config.name, lightSwitch);
+        logger.LogInformation("All light switch triggered");
 
-            logger.LogInformation("Power Switches loaded successfully in Light Switch Service");
+        foreach (var lightSwitchConfig in GetAllLightSwitch())
+        {
+            ILightSwitch lightSwitch;
+
+            if (lightSwitchConfig.isDimmer == true)
+            {
+                lightSwitch = lightSwitchFactory.CreateDimmerLightSwitch(lightSwitchConfig, lightSwitchConfig.stayOn);
+            }
+            else
+            {
+                lightSwitch = lightSwitchFactory.CreateLightSwitch(lightSwitchConfig, lightSwitchConfig.stayOn);
+            }
+
+            if(command)
+            {
+                lightSwitch.EnableAuto();
+            }
+            else
+            {
+                lightSwitch.DisableAuto();
+            }
         }
+
+        foreach (var powerSwitch in GetAllPowerSwitch())
+        {
+            var lightSwitch = lightSwitchFactory.CreateLightSwitch(powerSwitch, null);
+            if (command)
+            {
+                lightSwitch.EnableAuto();
+            }
+            else
+            {
+                lightSwitch.DisableAuto();
+            }
+        }
+    }
+
+    bool TryGetLightSwitch(string key, out Core.Models.LightSwitch? lightSwitch)
+    {
+        if (options.Value.lightSwitches is null)
+        {
+            lightSwitch = null;
+            return false;
+        }
+
+        lightSwitch = options.Value.lightSwitches.Where(e => e.name == key).FirstOrDefault();
+        return true;
+    }
+
+    bool TryGetPowerSwitch(string key, out Core.Models.PowerSwitch? powerSwitch)
+    {
+        if (options.Value.powerSwitches is null)
+        {
+            powerSwitch = null;
+            return false;
+        }
+
+        powerSwitch = options.Value.powerSwitches.Where(e => e.name == key).FirstOrDefault();
+        return true;
+    }
+
+    IEnumerable<Core.Models.LightSwitch> GetAllLightSwitch()
+    {
+        if (options.Value.lightSwitches == null)
+        {
+            return [];
+        }
+
+        return options.Value.lightSwitches;
+    }
+
+    IEnumerable<Core.Models.PowerSwitch> GetAllPowerSwitch()
+    {
+        if (options.Value.powerSwitches == null)
+        {
+            return [];
+        }
+
+        return options.Value.powerSwitches.Where(e => e.type == "light");
     }
 }

@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using MQTTnet;
+﻿using MQTTnet;
 using MQTTnet.Client;
 using SimplySmart.DeviceStates.Services;
 using System;
@@ -15,30 +14,23 @@ public interface IGarageDoorOpenerEventHandler
     Task Handle(MqttApplicationMessageReceivedEventArgs e);
 }
 
-internal class GarageDoorOpenerEventHandler(ILogger<IGarageDoorOpenerEventHandler> logger, IAccessPointService accessPointServices) : IGarageDoorOpenerEventHandler
+internal class GarageDoorOpenerEventHandler(IGarageDoorService garageDoorService) : IGarageDoorOpenerEventHandler
 {
     public async Task Handle(MqttApplicationMessageReceivedEventArgs e)
     {
         var name = e.ApplicationMessage.Topic.Replace("homebridge/garage_door_opener/", "").Replace("/targetDoorState", "");
         var message = e.ApplicationMessage.ConvertPayloadToString();
-
-        await UpdateState(name, message);
-    }
-
-    private async Task UpdateState(string name, string message)
-    {
         var command = ConvertMessage(message);
-        var garageDoor = (IGarageDoor)accessPointServices[name];
-        await garageDoor.Trigger(command);
+        garageDoorService[name]?.SetToOn(command);
     }
 
-    private static GarageDoorCommand ConvertMessage(string message)
+    public static bool ConvertMessage(string message)
     {
-        switch (message)
+        return message switch
         {
-            case "O": return GarageDoorCommand.OPEN;
-            case "C": return GarageDoorCommand.CLOSE;
-            default: throw new Exception("Undefined value received from homebridge garage door opener");
-        }
+            "O" => true,
+            "C" => false,
+            _ => throw new Exception("Undefined value received from homebridge garage door opener"),
+        };
     }
 }

@@ -11,10 +11,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="SimplySmart.Tests\**" />
+    <EmbeddedResource Remove="SimplySmart.Tests\**" />
+    <None Remove="SimplySmart.Tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
-    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.6" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.20.1" />
     <PackageReference Include="MQTTnet.Extensions.ManagedClient" Version="4.3.3.952" />
     <PackageReference Include="StackExchange.Redis" Version="2.7.33" />
     <PackageReference Include="Stateless" Version="5.15.0" />
@@ -23,6 +29,12 @@
 
   <ItemGroup>
     <Folder Include="Utils\" />
+  </ItemGroup>
+  
+  <ItemGroup>
+      <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+        <_Parameter1>$(MSBuildProjectName).Tests</_Parameter1>
+      </AssemblyAttribute>
   </ItemGroup>
 
 </Project>

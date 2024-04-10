@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SimplySmart.Core.Models;
+using SimplySmart.HouseStates.Areas;
 using SimplySmart.HouseStates.Factories;
 using System;
 using System.Collections.Generic;
@@ -12,67 +13,60 @@ namespace SimplySmart.HouseStates.Services;
 
 public interface IAreaOccupantService
 {
-    IAreaOccupant this[string key] { get; }
+    IAreaOccupant? this[string key] { get; }
     bool Exists(string key);
 }
 
-internal class AreaOccupantService : IAreaOccupantService
+internal class AreaOccupantService(IOptions<ApplicationConfig> options, ILogger<AreaOccupantService> logger, IAreaOccupantFactory areaOccupantFactory) : IAreaOccupantService
 {
-    public IAreaOccupant this[string key]
+    public IAreaOccupant? this[string key]
     {
         get
         {
-            if (!states.TryGetValue(key, out IAreaOccupant? value))
+            if (TryGetCamera(key, out Camera? camera) && camera != null)
             {
-                throw new Exception($"Area Occupant with {key} does not exist");
+                return areaOccupantFactory.CreateAreaOccupant(camera);
             }
 
-            return value;
+            if (TryGetMultiSensor(key, out MultiSensor? multiSensor) && multiSensor != null)
+            {
+                return areaOccupantFactory.CreateAreaOccupant(multiSensor);
+            }
+
+            logger.LogError($"Area Occupant with {key} does not exist");
+            return null;
         }
     }
 
-    private readonly ILogger<AreaOccupantService> logger;
+    private readonly ILogger<AreaOccupantService> logger = logger;
     private readonly Dictionary<string, IAreaOccupant> states = [];
-
-    public AreaOccupantService(IOptions<ApplicationConfig> options, ILogger<AreaOccupantService> logger, IAreaOccupantFactory areaOccupantFactory)
-    {
-        this.logger = logger;
-
-        if (options.Value.cameras != null)
-        {
-            InitialiseCamera(options.Value, areaOccupantFactory);
-        }
-
-        if (options.Value.multiSensors != null)
-        {
-            InitialiseMultiSensor(options.Value, areaOccupantFactory);
-        }
-    }
-
-    private void InitialiseCamera(ApplicationConfig appConfig, IAreaOccupantFactory areaOccupantFactory)
-    {
-        foreach (var config in appConfig.cameras)
-        {
-            var areaOccupant = areaOccupantFactory.CreateAreaOccupant(config.lightSwitch);
-            states.Add(config.name, areaOccupant);
-        }
-
-        logger.LogInformation("Cameras loaded successfully in Area Occupant Service");
-    }
-
-    private void InitialiseMultiSensor(ApplicationConfig appConfig, IAreaOccupantFactory areaOccupantFactory)
-    {
-        foreach (var config in appConfig.multiSensors)
-        {
-            var areaOccupant = areaOccupantFactory.CreateAreaOccupant(config.lightSwitch);
-            states.Add(config.name, areaOccupant);
-        }
-
-        logger.LogInformation("Multi Sensors loaded successfully in Area Occupant Service");
-    }
 
     public bool Exists(string key)
     {
         return states.ContainsKey(key);
+    }
+
+    bool TryGetCamera(string key, out Camera? camera)
+    {
+        if (options.Value.cameras is null)
+        {
+            camera = null;
+            return false;
+        }
+
+        camera = options.Value.cameras.Where(e => e.name == key).FirstOrDefault();
+        return true;
+    }
+
+    bool TryGetMultiSensor(string key, out MultiSensor? multiSensor)
+    {
+        if (options.Value.multiSensors is null)
+        {
+            multiSensor = null;
+            return false;
+        }
+
+        multiSensor = options.Value.multiSensors.Where(e => e.name == key).FirstOrDefault();
+        return true;
     }
 }

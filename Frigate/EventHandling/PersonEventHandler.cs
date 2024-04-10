@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using MQTTnet;
 using MQTTnet.Client;
+using SimplySmart.HouseStates.Areas;
 using SimplySmart.HouseStates.Services;
 using System;
 using System.Collections.Generic;
@@ -28,14 +29,8 @@ internal class PersonEventHandler(ILogger<PersonEventHandler> logger, IAreaOccup
     {
         if (areaOccupantService.Exists(areaName))
         {
-            if (count != 0)
-            {
-                areaOccupantService[areaName].Trigger(AreaOccupantCommand.SET_MOVING);
-            }
-            else
-            {
-                areaOccupantService[areaName].Trigger(AreaOccupantCommand.SET_EMPTY);
-            }
+            var command = count != 0 ? AreaOccupantCommand.SET_MOVING : AreaOccupantCommand.SET_EMPTY;
+            areaOccupantService[areaName].Trigger(command);
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using MQTTnet;
 using MQTTnet.Client;
+using SimplySmart.HouseStates.Features;
 using SimplySmart.HouseStates.Services;
 using System;
 using System.Collections.Generic;

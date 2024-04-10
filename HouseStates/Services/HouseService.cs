@@ -1,5 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
-using SimplySmart.HouseStates.Factories;
+﻿using SimplySmart.HouseStates.Factories;
+using SimplySmart.HouseStates.Features;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,24 +11,22 @@ namespace SimplySmart.HouseStates.Services;
 public interface IHouseService
 {
     IHouseSecurity Security { get; }
-
     IAutoLight AutoLight { get; }
+    void PublishAll();
 }
 
-internal class HouseService : IHouseService
+internal class HouseService(IAutoLightFactory autoLightFactory, IHouseSecurityFactory houseSecurityFactory) : IHouseService
 {
-    private readonly ILogger<HouseService> logger;
-    private readonly IHouseSecurity security;
-    private readonly IAutoLight autoLight;
+    public IHouseSecurity Security {
+        get { return houseSecurityFactory.CreateHouseSecurity(); }
+    }
+    public IAutoLight AutoLight {
+        get { return autoLightFactory.CreateAutoLight(); }
+    }
 
-    public IHouseSecurity Security { get { return security; } }
-    public IAutoLight AutoLight { get { return autoLight; } }
-
-    public HouseService(ILogger<HouseService> logger, IAutoLightFactory autoLightFactory, IHouseSecurityFactory houseSecurityFactory)
+    public void PublishAll()
     {
-        this.logger = logger;
-
-        security = houseSecurityFactory.CreateHouseSecurity();
-        autoLight = autoLightFactory.CreateAutoLight();
+        Security.Publish();
+        AutoLight.Publish();
     }
 }

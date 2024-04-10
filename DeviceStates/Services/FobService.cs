@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SimplySmart.Core.Models;
+using SimplySmart.DeviceStates.Devices;
 using SimplySmart.DeviceStates.Factories;
 using System;
 using System.Collections.Generic;

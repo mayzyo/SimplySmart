@@ -1,5 +1,5 @@
 ﻿using MQTTnet.Extensions.ManagedClient;
-using SimplySmart.HouseStates.Services;
+using SimplySmart.HouseStates.Features;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -86,15 +86,15 @@ internal class HomebridgeEventSender(IManagedMqttClient mqttClient) : IHomebridg
         await mqttClient.EnqueueAsync("homebridge/security/getCurrentState", ConvertState(state));
     }
 
-    private static string ConvertState(HouseSecurityState state)
+    static string ConvertState(HouseSecurityState state)
     {
-        switch (state)
+        return state switch
         {
-            case HouseSecurityState.OFF: return "D";
-            case HouseSecurityState.NIGHT: return "NA";
-            case HouseSecurityState.AWAY: return "AA";
-            case HouseSecurityState.HOME: return "SA";
-            default: throw new Exception("Undefined value received from statelss");
-        }
+            HouseSecurityState.OFF => "D",
+            HouseSecurityState.NIGHT => "NA",
+            HouseSecurityState.AWAY => "AA",
+            HouseSecurityState.HOME => "SA",
+            _ => throw new Exception("Undefined value received from statelss"),
+        };
     }
 }

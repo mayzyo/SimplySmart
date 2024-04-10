@@ -1,5 +1,6 @@
-﻿using SimplySmart.Core.Services;
-using SimplySmart.DeviceStates.Services;
+﻿using SimplySmart.Core.Abstractions;
+using SimplySmart.Core.Models;
+using SimplySmart.DeviceStates.Devices;
 using SimplySmart.Homebridge.Services;
 using SimplySmart.Zwave.Services;
 using System;
@@ -12,13 +13,22 @@ namespace SimplySmart.DeviceStates.Factories;
 
 public interface ILightSwitchFactory
 {
-    ILightSwitch CreateLightSwitch(string name, int? stayOn);
-    ILightSwitch CreateDimmerLightSwitch(string name, int? stayOn);
+    ILightSwitch CreateLightSwitch(Core.Models.LightSwitch lightSwitch, int? stayOn);
+    ILightSwitch CreateLightSwitch(PowerSwitch powerSwitch, int? stayOn);
+    IDimmerLightSwitch CreateDimmerLightSwitch(Core.Models.LightSwitch lightSwitch, int? stayOn);
 }
 
 internal class LightSwitchFactory(IStateStorageService stateStorageService, IHomebridgeEventSender homebridgeEventSender, IZwaveEventSender zwaveEventSender) : ILightSwitchFactory
 {
-    public ILightSwitch CreateLightSwitch(string name, int? stayOn) => new LightSwitch(stateStorageService, homebridgeEventSender, zwaveEventSender, name, stayOn);
+    public ILightSwitch CreateLightSwitch(Core.Models.LightSwitch lightSwitch, int? stayOn) =>
+        new Devices.LightSwitch(stateStorageService, homebridgeEventSender, zwaveEventSender, lightSwitch.name, stayOn)
+            .Connect();
 
-    public ILightSwitch CreateDimmerLightSwitch(string name, int? stayOn) => new DimmerLightSwitch(stateStorageService, homebridgeEventSender, zwaveEventSender, name, stayOn);
+    public ILightSwitch CreateLightSwitch(PowerSwitch powerSwitch, int? stayOn) =>
+        new Devices.LightSwitch(stateStorageService, homebridgeEventSender, zwaveEventSender, powerSwitch.name, stayOn)
+            .Connect();
+
+    public IDimmerLightSwitch CreateDimmerLightSwitch(Core.Models.LightSwitch lightSwitch, int? stayOn) =>
+        new DimmerLightSwitch(stateStorageService, homebridgeEventSender, zwaveEventSender, lightSwitch.name, stayOn)
+            .Connect();
 }

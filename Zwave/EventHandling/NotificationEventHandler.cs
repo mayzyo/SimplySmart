@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
 using MQTTnet;
 using MQTTnet.Client;
+using SimplySmart.Core.Extensions;
+using SimplySmart.HouseStates.Areas;
 using SimplySmart.HouseStates.Services;
 using SimplySmart.Zwave.Models;
 using System;
@@ -17,58 +19,27 @@ public interface INotificationEventHandler
     Task HandleEvent(MqttApplicationMessageReceivedEventArgs e);
 }
 
-internal class NotificationEventHandler : INotificationEventHandler
+internal class NotificationEventHandler(ILogger<NotificationEventHandler> logger, IAreaOccupantService areaOccupantService) : INotificationEventHandler
 {
-    private readonly ILogger<NotificationEventHandler> logger;
-    private readonly IAreaOccupantService areaOccupantManager;
-
-    public NotificationEventHandler(ILogger<NotificationEventHandler> logger, IAreaOccupantService areaOccupantManager)
-    {
-        this.logger = logger;
-        this.areaOccupantManager = areaOccupantManager;
-    }
-
     public async Task HandleEvent(MqttApplicationMessageReceivedEventArgs e)
     {
         var name = e.ApplicationMessage.Topic.Replace("zwave/", "");
-        if (areaOccupantManager.Exists(name))
+        if (areaOccupantService.Exists(name))
         {
-            var message = e.ApplicationMessage.ConvertPayloadToString();
-            UpdateMultiSensor(name, message);
+            if (!e.ApplicationMessage.DeserialiseMessage(out Payload? payload) || payload == default)
+            {
+                logger.LogError("message not in JSON format.");
+                return;
+            }
+
+            UpdateMultiSensor(name, payload);
         }
     }
 
-    private void UpdateMultiSensor(string name, string message)
+    void UpdateMultiSensor(string name, Payload payload)
     {
-        var multiSensor = areaOccupantManager[name];
-        var payload = DeserialiseMessage<Payload>(message);
-        if (payload == default)
-        {
-            logger.LogError("message JSON was empty");
-            return;
-        }
-
-        if (payload.value == 0)
-        {
-            multiSensor.Trigger(AreaOccupantCommand.SET_EMPTY);
-        }
-        else
-        {
-            multiSensor.Trigger(AreaOccupantCommand.SET_MOVING);
-        }
-    }
-
-    private T? DeserialiseMessage<T>(string message)
-    {
-        try
-        {
-            return JsonSerializer.Deserialize<T>(message);
-        }
-        catch
-        {
-            logger.LogError("message not in JSON format.");
-        }
-
-        return default;
+        var multiSensor = areaOccupantService[name];
+        var command = payload.value == 0 ? AreaOccupantCommand.SET_EMPTY : AreaOccupantCommand.SET_MOVING;
+        multiSensor.Trigger(command);
     }
 }

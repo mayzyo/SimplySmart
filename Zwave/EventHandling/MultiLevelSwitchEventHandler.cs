@@ -1,14 +1,13 @@
 ﻿using Microsoft.Extensions.Logging;
-using MQTTnet;
 using MQTTnet.Client;
-using SimplySmart.Core.Models;
-using SimplySmart.DeviceStates.Services;
+using SimplySmart.Core.Abstractions;
+using SimplySmart.Core.Extensions;
 using SimplySmart.Zwave.Models;
+using SimplySmart.Zwave.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
 
 namespace SimplySmart.Zwave.EventHandling;
 
@@ -18,51 +17,23 @@ public interface IMultiLevelSwitchEventHandler
     Task Handle(MqttApplicationMessageReceivedEventArgs e);
 }
 
-internal class MultiLevelSwitchEventHandler(ILogger<MultiLevelSwitchEventHandler> logger, ILightSwitchService lightSwitchService) : IMultiLevelSwitchEventHandler
+internal class MultiLevelSwitchEventHandler(ILogger<MultiLevelSwitchEventHandler> logger, IStateStorageService stateStorageService, IMultiLevelSwitchService multiLevelSwitchService) : IMultiLevelSwitchEventHandler
 {
     public async Task Handle(MqttApplicationMessageReceivedEventArgs e)
     {
         var name = e.ApplicationMessage.Topic.Replace("zwave/", "").Replace("/currentValue", "");
-        if (lightSwitchService.Exists(name))
+        if (!e.ApplicationMessage.DeserialiseMessage(out MultilevelSwitch? multiLevelSwitch) || multiLevelSwitch == default)
         {
-            var message = e.ApplicationMessage.ConvertPayloadToString();
-            UpdateDimmerLightSwitch(name, message);
-        }
-    }
-
-    private void UpdateDimmerLightSwitch(string name, string message)
-    {
-        var dimmer = (IDimmerLightSwitch)lightSwitchService[name];
-        var dimmerSwitch = DeserialiseMessage<MultilevelSwitch>(message);
-        if (dimmerSwitch == default)
-        {
-            logger.LogError("message JSON was empty");
+            logger.LogError("message not in JSON format.");
             return;
         }
 
-        dimmerSwitch.value = (ushort)(dimmerSwitch.value == 99 ? 100 : dimmerSwitch.value);
-
-        if (dimmerSwitch.value == 0)
+        var expiryString = stateStorageService.GetState(name + "_zwave");
+        if (ushort.TryParse(expiryString, out ushort expiry) && expiry == multiLevelSwitch.value)
         {
-            dimmer.Trigger(LightSwitchCommand.MANUAL_OFF, BroadcastSource.ZWAVE);
-        }
-        else if (dimmer.IsInState(LightSwitchState.OFF) || dimmerSwitch.value != dimmer.Brightness)
-        {
-            dimmer.Trigger(LightSwitchCommand.MANUAL_ON, dimmerSwitch.value, BroadcastSource.ZWAVE);
-        }
-    }
-
-    private T? DeserialiseMessage<T>(string message)
-    {
-        try
-        {
-            return JsonSerializer.Deserialize<T>(message);
-        }
-        catch
-        {
-            logger.LogError("message not in JSON format.");
+            return;
         }
 
-        return default;
+        multiLevelSwitchService[name]?.SetLevel(multiLevelSwitch.value);
     }
 }

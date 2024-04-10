@@ -1,6 +1,6 @@
-﻿using SimplySmart.Core.Services;
+﻿using SimplySmart.Core.Abstractions;
 using SimplySmart.Homebridge.Services;
-using SimplySmart.HouseStates.Services;
+using SimplySmart.HouseStates.Features;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,5 +16,5 @@ public interface IHouseSecurityFactory
 
 internal class HouseSecurityFactory(IStateStorageService stateStorageService, IHomebridgeEventSender homebridgeEventSender) : IHouseSecurityFactory
 {
-    public IHouseSecurity CreateHouseSecurity() => new HouseSecurity(stateStorageService, homebridgeEventSender);
+    public IHouseSecurity CreateHouseSecurity() => new HouseSecurity(stateStorageService, homebridgeEventSender).Connect();
 }

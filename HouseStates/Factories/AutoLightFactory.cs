@@ -1,7 +1,7 @@
-﻿using SimplySmart.Core.Services;
+﻿using SimplySmart.Core.Abstractions;
 using SimplySmart.DeviceStates.Services;
 using SimplySmart.Homebridge.Services;
-using SimplySmart.HouseStates.Services;
+using SimplySmart.HouseStates.Features;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,5 +17,5 @@ public interface IAutoLightFactory
 
 internal class AutoLightFactory(IStateStorageService stateStorageService, IHomebridgeEventSender homebridgeEventSender, ILightSwitchService lightSwitchService) : IAutoLightFactory
 {
-    public IAutoLight CreateAutoLight() => new AutoLight(stateStorageService, homebridgeEventSender, lightSwitchService);
+    public IAutoLight CreateAutoLight() => new AutoLight(stateStorageService, homebridgeEventSender, lightSwitchService).Connect();
 }

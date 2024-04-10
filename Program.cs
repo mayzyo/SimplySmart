@@ -16,6 +16,11 @@ using SimplySmart.Frigate.EventHandling;
 using SimplySmart.Core.Models;
 using SimplySmart.Zwave.EventHandling;
 using SimplySmart.Core.Services;
+using SimplySmart.DeviceStates.Factories;
+using SimplySmart.Nodemation.EventHandling;
+using SimplySmart.Nodemation.Services;
+using SimplySmart.HouseStates.Factories;
+using SimplySmart.Core.Abstractions;
 
 // Reference: https://code-maze.com/dotnet-factory-pattern-dependency-injection/
 
@@ -43,31 +48,48 @@ Host.CreateDefaultBuilder(args)
             return mqttFactory.CreateManagedMqttClient();
         });
         services.AddHostedService<EventBusService>();
-        services.AddSingleton<IStateStorageService, StateStorageService>();
+        services.AddSingleton<IStateStorageService, RedisStateStorageService>();
+        services.AddScoped<IStateSyncService, StateSyncService>();
 
-        services.AddTransient<IFrigateEventHandler, FrigateEventHandler>();
-        services.AddTransient<IPersonEventHandler, PersonEventHandler>();
+        // Devices Module
+        services.AddTransient<IFanFactory, FanFactory>();
+        services.AddTransient<ILightSwitchFactory, LightSwitchFactory>();
+        services.AddTransient<IGarageDoorFactory, GarageDoorFactory>();
+        services.AddScoped<IFanService, FanService>();
+        services.AddScoped<ILightSwitchService, LightSwitchService>();
+        services.AddScoped<IGarageDoorService, GarageDoorService>();
+        //services.AddScoped<IFobService, FobService>();
 
+        // House Module
+        services.AddTransient<IAutoLightFactory, AutoLightFactory>();
+        services.AddTransient<IHouseSecurityFactory, HouseSecurityFactory>();
+        services.AddTransient<IAreaOccupantFactory, AreaOccupantFactory>();
+        services.AddScoped<IAreaOccupantService, AreaOccupantService>();
+        services.AddScoped<IHouseService, HouseService>();
+
+        // Zwave Module
+        services.AddTransient<IZwaveEventSender, ZwaveEventSender>();
         services.AddTransient<IBinarySwitchEventHandler, BinarySwitchEventHandler>();
         services.AddTransient<IMultiLevelSwitchEventHandler, MultiLevelSwitchEventHandler>();
         services.AddTransient<ICentralSceneEventHandler, CentralSceneEventHandler>();
         services.AddTransient<INotificationEventHandler, NotificationEventHandler>();
-        services.AddTransient<IZwaveEventSender, ZwaveEventSender>();
 
-        services.AddTransient<ILightSwitchEventHandler, LightSwitchEventHandler>();
-        services.AddTransient<ISwitchEventHandler, SwitchEventHandler>();
-        services.AddTransient<ISecurityEventHandler, SecurityEventHandler>();
-        services.AddTransient<IGarageDoorOpenerEventHandler, GarageDoorOpenerEventHandler>();
+        // Frigate Module
+        services.AddTransient<IFrigateEventHandler, FrigateEventHandler>();
+        services.AddTransient<IPersonEventHandler, PersonEventHandler>();
+
+        // Homebridge Module
         services.AddTransient<IFanEventHandler, FanEventHandler>();
+        services.AddTransient<ILightSwitchEventHandler, LightSwitchEventHandler>();
+        services.AddTransient<IDimmerLightSwitchEventHandler, DimmerLightSwitchEventHandler>();
+        services.AddTransient<IGarageDoorOpenerEventHandler, GarageDoorOpenerEventHandler>();
         services.AddTransient<IHomebridgeEventSender, HomebridgeEventSender>();
+        //services.AddTransient<ISwitchEventHandler, SwitchEventHandler>();
+        //services.AddTransient<ISecurityEventHandler, SecurityEventHandler>();
 
-        services.AddTransient<ILightSwitchService, LightSwitchService>();
-        services.AddTransient<IAccessPointService, AccessPointService>();
-        services.AddTransient<IApplianceService, ApplianceService>();
-        services.AddTransient<IFobService, FobService>();
-
-        services.AddTransient<IAreaOccupantService, AreaOccupantService>();
-        services.AddTransient<IHouseService, HouseService>();
+        // Nodemation Module
+        services.AddTransient<INodemationEventSender, NodemationEventSender>();
+        services.AddTransient<IGarageDoorEventHandler, GarageDoorEventHandler>();
     })
     .Build()
     .Run();

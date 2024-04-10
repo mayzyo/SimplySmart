@@ -1,4 +1,5 @@
 ﻿using SimplySmart.Core.Models;
+using SimplySmart.DeviceStates.Devices;
 using SimplySmart.DeviceStates.Services;
 using System;
 using System.Collections.Generic;
@@ -13,7 +14,7 @@ public interface IFobFactory
     IFob CreateFob(IList<FobButton> fobButtons);
 }
 
-internal class FobFactory(IAccessPointService accessPointService) : IFobFactory
+internal class FobFactory(IGarageDoorService accessPointService) : IFobFactory
 {
-    public IFob CreateFob(IList<FobButton> fobButtons) => new Services.Fob(accessPointService, fobButtons);
+    public IFob CreateFob(IList<FobButton> fobButtons) => new Devices.Fob(accessPointService, fobButtons);
 }

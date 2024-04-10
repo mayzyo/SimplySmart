@@ -1,5 +1,6 @@
-﻿using SimplySmart.Core.Services;
+﻿using SimplySmart.Core.Abstractions;
 using SimplySmart.Homebridge.Services;
+using SimplySmart.Zwave.Abstractions;
 using SimplySmart.Zwave.Services;
 using Stateless;
 using System;
@@ -8,21 +9,26 @@ using System.Threading.Tasks;
 using System.Timers;
 using Timer = System.Timers.Timer;
 
-namespace SimplySmart.DeviceStates.Services;
+namespace SimplySmart.DeviceStates.Devices;
 
-public interface IGarageDoor : IAccessPoint
+public interface IGarageDoor : IBinarySwitch
 {
+    IGarageDoor Connect();
     GarageDoorState State { get; }
-    Task Trigger(GarageDoorCommand command);
+    void Publish();
     Task Toggle();
+    void CloseVerified();
+    void OpenVerified();
 }
 
 internal class GarageDoor : IGarageDoor
 {
+    const int DELAY_DEFAULT = 20000;
+
     public GarageDoorState State { get { return stateMachine.State; } }
     public readonly StateMachine<GarageDoorState, GarageDoorCommand> stateMachine;
-    private readonly Timer triggerDelayTimer;
-    private readonly string name;
+    readonly Timer triggerDelayTimer;
+    readonly string name;
 
     readonly IHomebridgeEventSender homebridgeEventSender;
     readonly IZwaveEventSender zwaveEventSender;
@@ -36,10 +42,10 @@ internal class GarageDoor : IGarageDoor
         stateMachine = new(
             () =>
             {
-                var state = stateStorage.GetState(name);
-                if (Enum.TryParse(state, out GarageDoorState myStatus))
+                var stateString = stateStorage.GetState(name);
+                if (Enum.TryParse(stateString, out GarageDoorState state))
                 {
-                    return myStatus;
+                    return state;
                 }
 
                 return GarageDoorState.CLOSED;
@@ -47,13 +53,26 @@ internal class GarageDoor : IGarageDoor
             s => stateStorage.UpdateState(name, s.ToString())
         );
 
+        triggerDelayTimer = new Timer(DELAY_DEFAULT) { AutoReset = false, Enabled = false };
+        triggerDelayTimer.Elapsed += DelayTimerElapsed;
+    }
+
+    public void Publish()
+    {
+        stateMachine.Activate();
+    }
+
+    public IGarageDoor Connect()
+    {
         stateMachine.Configure(GarageDoorState.CLOSED)
             .OnEntryAsync(SetToClose)
-            .Permit(GarageDoorCommand.OPEN, GarageDoorState.OPENING);
+            .Permit(GarageDoorCommand.OPEN, GarageDoorState.OPENING)
+            .Ignore(GarageDoorCommand.CLOSE);
 
-        stateMachine.Configure(GarageDoorState.OPEN)
+        stateMachine.Configure(GarageDoorState.OPENED)
             .OnEntryAsync(SetToOpen)
-            .Permit(GarageDoorCommand.CLOSE, GarageDoorState.CLOSING);
+            .Permit(GarageDoorCommand.CLOSE, GarageDoorState.CLOSING)
+            .Ignore(GarageDoorCommand.OPEN);
 
         stateMachine.Configure(GarageDoorState.CLOSING)
             .OnEntryAsync(async () =>
@@ -62,7 +81,8 @@ internal class GarageDoor : IGarageDoor
                 ConfigureTimer(true, triggerDelayTimer);
             })
             .OnExit(() => ConfigureTimer(false, triggerDelayTimer))
-            .Permit(GarageDoorCommand.COMPLETE_CLOSE, GarageDoorState.CLOSED);
+            .Permit(GarageDoorCommand.COMPLETE_CLOSE, GarageDoorState.CLOSED)
+            .Ignore(GarageDoorCommand.CLOSE);
 
         stateMachine.Configure(GarageDoorState.OPENING)
             .OnEntryAsync(async () =>
@@ -71,31 +91,36 @@ internal class GarageDoor : IGarageDoor
                 ConfigureTimer(true, triggerDelayTimer);
             })
             .OnExit(() => ConfigureTimer(false, triggerDelayTimer))
-            .Permit(GarageDoorCommand.COMPLETE_OPEN, GarageDoorState.OPEN);
+            .Permit(GarageDoorCommand.COMPLETE_OPEN, GarageDoorState.OPENED)
+            .Ignore(GarageDoorCommand.OPEN);
 
-        triggerDelayTimer = new Timer(20000) { AutoReset = false, Enabled = false };
-        triggerDelayTimer.Elapsed += DelayTimerElapsed;
+        return this;
+    }
+
+    public async Task SetToOn(bool isOn)
+    {
+        var command = isOn ? GarageDoorCommand.OPEN : GarageDoorCommand.CLOSE;
+        await stateMachine.FireAsync(command);
+    }
+
+    public void CloseVerified()
+    {
+        stateMachine.FireAsync(GarageDoorCommand.COMPLETE_CLOSE);
+    }
+
+    public void OpenVerified()
+    {
+        stateMachine.FireAsync(GarageDoorCommand.COMPLETE_OPEN);
     }
 
     public async Task Trigger(GarageDoorCommand command)
     {
-        if (stateMachine.IsInState(GarageDoorState.OPENING))
-        {
-            await homebridgeEventSender.GarageDoorOpenerOn(name);
-        }
-        else if (stateMachine.IsInState(GarageDoorState.CLOSING))
-        {
-            await homebridgeEventSender.GarageDoorOpenerOff(name);
-        }
-        else
-        {
-            await stateMachine.FireAsync(command);
-        }
+        await stateMachine.FireAsync(command);
     }
 
     public async Task Toggle()
     {
-        if (State == GarageDoorState.OPEN)
+        if (State == GarageDoorState.OPENED)
         {
             await Trigger(GarageDoorCommand.CLOSE);
         }
@@ -105,7 +130,7 @@ internal class GarageDoor : IGarageDoor
         }
     }
 
-    private async Task SetToOpening()
+    async Task SetToOpening()
     {
         await homebridgeEventSender.GarageDoorOpenerOn(name);
         await homebridgeEventSender.GarageDoorOpenerMoving(name);
@@ -113,7 +138,7 @@ internal class GarageDoor : IGarageDoor
         await zwaveEventSender.BinarySwitchOn(name);
     }
 
-    private async Task SetToClosing()
+    async Task SetToClosing()
     {
         await homebridgeEventSender.GarageDoorOpenerOff(name);
         await homebridgeEventSender.GarageDoorOpenerMoving(name);
@@ -121,19 +146,19 @@ internal class GarageDoor : IGarageDoor
         await zwaveEventSender.BinarySwitchOff(name);
     }
 
-    private async Task SetToOpen()
+    async Task SetToOpen()
     {
         await homebridgeEventSender.GarageDoorOpenerStopped(name);
         await zwaveEventSender.BinarySwitchOff(name);
     }
 
-    private async Task SetToClose()
+    async Task SetToClose()
     {
         await homebridgeEventSender.GarageDoorOpenerStopped(name);
         await zwaveEventSender.BinarySwitchOff(name);
     }
 
-    private static void ConfigureTimer(bool active, Timer timer)
+    static void ConfigureTimer(bool active, Timer timer)
     {
         if (timer != null)
         {
@@ -149,7 +174,7 @@ internal class GarageDoor : IGarageDoor
 
     }
 
-    private void DelayTimerElapsed(object? sender, ElapsedEventArgs e)
+    void DelayTimerElapsed(object? sender, ElapsedEventArgs e)
     {
         if (stateMachine.IsInState(GarageDoorState.CLOSING))
         {
@@ -164,7 +189,7 @@ internal class GarageDoor : IGarageDoor
 
 public enum GarageDoorState
 {
-    OPEN,
+    OPENED,
     CLOSED,
     OPENING,
     CLOSING

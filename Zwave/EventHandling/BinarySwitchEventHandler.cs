@@ -1,14 +1,13 @@
 ﻿using Microsoft.Extensions.Logging;
-using MQTTnet;
 using MQTTnet.Client;
-using SimplySmart.Core.Models;
-using SimplySmart.DeviceStates.Services;
+using SimplySmart.Core.Abstractions;
+using SimplySmart.Core.Extensions;
 using SimplySmart.Zwave.Models;
+using SimplySmart.Zwave.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
 
 namespace SimplySmart.Zwave.EventHandling;
 
@@ -18,49 +17,23 @@ public interface IBinarySwitchEventHandler
     Task Handle(MqttApplicationMessageReceivedEventArgs e);
 }
 
-internal class BinarySwitchEventHandler(ILogger<BinarySwitchEventHandler> logger, ILightSwitchService lightSwitchManager) : IBinarySwitchEventHandler
+internal class BinarySwitchEventHandler(ILogger<BinarySwitchEventHandler> logger, IStateStorageService stateStorageService, IBinarySwitchService binarySwitchService) : IBinarySwitchEventHandler
 {
     public async Task Handle(MqttApplicationMessageReceivedEventArgs e)
     {
         var name = e.ApplicationMessage.Topic.Replace("zwave/", "").Replace("/currentValue", "");
-
-        if (lightSwitchManager.Exists(name))
+        if (!e.ApplicationMessage.DeserialiseMessage(out BinarySwitch? binarySwitch) || binarySwitch == default)
         {
-            var message = e.ApplicationMessage.ConvertPayloadToString();
-            UpdateLightSwitch(name, message);
-        }
-    }
-
-    private void UpdateLightSwitch(string name, string message)
-    {
-        var binarySwitch = DeserialiseMessage<BinarySwitch>(message);
-        if (binarySwitch == default)
-        {
-            logger.LogError("message JSON was empty");
+            logger.LogError("message not in JSON format.");
             return;
         }
 
-        if (binarySwitch.value == true)
+        var expiry = stateStorageService.GetState(name + "_zwave");
+        if(expiry != null && (expiry == "true") == binarySwitch.value)
         {
-            lightSwitchManager[name].Trigger(LightSwitchCommand.MANUAL_ON, BroadcastSource.ZWAVE);
-        }
-        else
-        {
-            lightSwitchManager[name].Trigger(LightSwitchCommand.MANUAL_OFF, BroadcastSource.ZWAVE);
-        }
-    }
-
-    private T? DeserialiseMessage<T>(string message)
-    {
-        try
-        {
-            return JsonSerializer.Deserialize<T>(message);
-        }
-        catch
-        {
-            logger.LogError("message not in JSON format.");
+            return;
         }
 
-        return default;
+        binarySwitchService[name]?.SetToOn(binarySwitch.value);
     }
 }

@@ -1,11 +1,12 @@
 ﻿using SimplySmart.Core.Models;
+using SimplySmart.DeviceStates.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SimplySmart.DeviceStates.Services;
+namespace SimplySmart.DeviceStates.Devices;
 
 public interface IFob
 {
@@ -14,12 +15,12 @@ public interface IFob
 
 public class Fob : IFob
 {
-    readonly IAccessPointService accessPointService;
+    readonly IGarageDoorService garageDoorService;
     readonly Dictionary<string, string> buttonMapping = [];
-    
-    public Fob(IAccessPointService accessPointService, IList<FobButton> fobButtons)
+
+    public Fob(IGarageDoorService accessPointService, IList<FobButton> fobButtons)
     {
-        this.accessPointService = accessPointService;
+        this.garageDoorService = accessPointService;
 
         foreach (var fobButton in fobButtons)
         {
@@ -32,8 +33,7 @@ public class Fob : IFob
         switch (button)
         {
             case "001":
-                var garageDoor = (IGarageDoor)accessPointService[buttonMapping[button]];
-                garageDoor.Toggle();
+                garageDoorService[buttonMapping[button]]?.Toggle();
                 break;
             case "002":
                 break;
