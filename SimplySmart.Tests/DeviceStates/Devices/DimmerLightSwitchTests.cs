@@ -1,5 +1,6 @@
 ﻿using Moq;
 using SimplySmart.Core.Abstractions;
+using SimplySmart.Core.Models;
 using SimplySmart.DeviceStates.Devices;
 using SimplySmart.Homebridge.Services;
 using SimplySmart.Zwave.Services;
@@ -14,7 +15,7 @@ namespace SimplySmart.Tests.DeviceStates.Devices;
 
 public class DimmerLightSwitchTests
 {
-    readonly Mock<IStateStorageService> stateStorageMock;
+    readonly Mock<IStateStore> stateStorageServiceMock;
     readonly Mock<IHomebridgeEventSender> homebridgeEventSenderMock;
     readonly Mock<IZwaveEventSender> zwaveEventSenderMock;
     readonly DimmerLightSwitch dimmerSwitch;
@@ -24,20 +25,38 @@ public class DimmerLightSwitchTests
 
     public DimmerLightSwitchTests()
     {
-        stateStorageMock = new Mock<IStateStorageService>();
-        stateStorageMock.Setup(s => s.GetState("TestDimmerSwitch"))
+        stateStorageServiceMock = new Mock<IStateStore>();
+        stateStorageServiceMock.Setup(s => s.GetState("TestDimmerSwitch"))
             .Returns(() => mockState);
-        stateStorageMock.Setup(s => s.UpdateState("TestDimmerSwitch", It.IsAny<string>()))
+        stateStorageServiceMock.Setup(s => s.UpdateState("TestDimmerSwitch", It.IsAny<string>()))
             .Callback((string a, string b) => mockState = b);
-        stateStorageMock.Setup(s => s.GetState("TestDimmerSwitch_brightness"))
+        stateStorageServiceMock.Setup(s => s.GetState("TestDimmerSwitch_brightness"))
             .Returns(() => mockBrightness);
-        stateStorageMock.Setup(s => s.UpdateState("TestDimmerSwitch_brightness", It.IsAny<string>()))
+        stateStorageServiceMock.Setup(s => s.UpdateState("TestDimmerSwitch_brightness", It.IsAny<string>()))
             .Callback((string a, string b) => mockBrightness = b);
 
         homebridgeEventSenderMock = new Mock<IHomebridgeEventSender>();
         zwaveEventSenderMock = new Mock<IZwaveEventSender>();
-        dimmerSwitch = new DimmerLightSwitch(stateStorageMock.Object, homebridgeEventSenderMock.Object, zwaveEventSenderMock.Object, "TestDimmerSwitch", null);
+        dimmerSwitch = new DimmerLightSwitch(stateStorageServiceMock.Object, homebridgeEventSenderMock.Object, zwaveEventSenderMock.Object, "TestDimmerSwitch", null);
         dimmerSwitch.Connect();
+    }
+
+    [Fact]
+    public async Task Publish_ShouldActivateStateMachine()
+    {
+        // Arrange
+        ushort level = 35;
+        mockState = LightSwitchState.ON.ToString();
+        mockBrightness = level.ToString();
+
+        // Act
+        await dimmerSwitch.Publish();
+
+        // Assert
+        Assert.Equal(LightSwitchState.ON, dimmerSwitch.State);
+        homebridgeEventSenderMock.Verify(x => x.DimmerBrightness("TestDimmerSwitch", level), Times.Once);
+        zwaveEventSenderMock.Verify(x => x.MultiLevelSwitchUpdate("TestDimmerSwitch", level), Times.Once);
+        stateStorageServiceMock.Verify(x => x.UpdateState("TestDimmerSwitch", mockState), Times.Never);
     }
 
     [Fact]
@@ -54,7 +73,7 @@ public class DimmerLightSwitchTests
         // Assert
         Assert.Equal(LightSwitchState.ON, dimmerSwitch.State);
         Assert.Equal(level, dimmerSwitch.Brightness);
-        homebridgeEventSenderMock.Verify(x => x.LightSwitchOn("TestDimmerSwitch", level), Times.Once);
+        homebridgeEventSenderMock.Verify(x => x.DimmerBrightness("TestDimmerSwitch", level), Times.Once);
         zwaveEventSenderMock.Verify(x => x.MultiLevelSwitchUpdate("TestDimmerSwitch", level), Times.Once);
     }
 
@@ -71,7 +90,7 @@ public class DimmerLightSwitchTests
 
         // Assert
         Assert.Equal(LightSwitchState.ON, dimmerSwitch.State);
-        homebridgeEventSenderMock.Verify(x => x.LightSwitchOn("TestDimmerSwitch", level), Times.Never);
+        homebridgeEventSenderMock.Verify(x => x.DimmerBrightness("TestDimmerSwitch", level), Times.Never);
         zwaveEventSenderMock.Verify(x => x.MultiLevelSwitchUpdate("TestDimmerSwitch", level), Times.Never);
     }
 
@@ -89,7 +108,7 @@ public class DimmerLightSwitchTests
         // Assert
         Assert.Equal(LightSwitchState.ON, dimmerSwitch.State);
         Assert.Equal(level, dimmerSwitch.Brightness);
-        homebridgeEventSenderMock.Verify(x => x.LightSwitchOn("TestDimmerSwitch", level), Times.Once);
+        homebridgeEventSenderMock.Verify(x => x.DimmerBrightness("TestDimmerSwitch", level), Times.Once);
         zwaveEventSenderMock.Verify(x => x.MultiLevelSwitchUpdate("TestDimmerSwitch", level), Times.Once);
     }
 
@@ -107,7 +126,7 @@ public class DimmerLightSwitchTests
         // Assert
         Assert.Equal(LightSwitchState.ON, dimmerSwitch.State);
         Assert.Equal(level, dimmerSwitch.Brightness);
-        homebridgeEventSenderMock.Verify(x => x.LightSwitchOn("TestDimmerSwitch", level), Times.Once);
+        homebridgeEventSenderMock.Verify(x => x.DimmerBrightness("TestDimmerSwitch", level), Times.Once);
         zwaveEventSenderMock.Verify(x => x.MultiLevelSwitchUpdate("TestDimmerSwitch", level), Times.Once);
     }
 

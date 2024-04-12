@@ -14,10 +14,10 @@ namespace SimplySmart.DeviceStates.Services;
 public interface IFanService
 {
     IFan? this[string key] { get; }
-    void PublishAll();
+    Task PublishAll();
 }
 
-internal class FanService(IOptions<ApplicationConfig> options, ILogger logger, IFanFactory applianceFactory) : IFanService
+internal class FanService(IOptions<ApplicationConfig> options, ILogger<IFanService> logger, IFanFactory applianceFactory) : IFanService
 {
     public IFan? this[string key]
     {
@@ -33,11 +33,11 @@ internal class FanService(IOptions<ApplicationConfig> options, ILogger logger, I
         }
     }
 
-    public void PublishAll()
+    public async Task PublishAll()
     {
         foreach (var powerSwitch in GetAllPowerSwitch())
         {
-            applianceFactory.CreateFan(powerSwitch).Publish();
+            await applianceFactory.CreateFan(powerSwitch).Publish();
         }
     }
 

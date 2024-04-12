@@ -14,10 +14,10 @@ namespace SimplySmart.DeviceStates.Services;
 public interface IGarageDoorService
 {
     IGarageDoor? this[string key] { get; }
-    void PublishAll();
+    Task PublishAll();
 }
 
-internal class GarageDoorService(IOptions<ApplicationConfig> options, ILogger logger, IGarageDoorFactory garageDoorFactory) : IGarageDoorService
+internal class GarageDoorService(IOptions<ApplicationConfig> options, ILogger<IGarageDoorService> logger, IGarageDoorFactory garageDoorFactory) : IGarageDoorService
 {
     public IGarageDoor? this[string key]
     {
@@ -33,11 +33,11 @@ internal class GarageDoorService(IOptions<ApplicationConfig> options, ILogger lo
         }
     }
 
-    public void PublishAll()
+    public async Task PublishAll()
     {
         foreach (var smartImplant in GetAllSmartImplant())
         {
-            garageDoorFactory.CreateGarageDoor(smartImplant).Publish();
+            await garageDoorFactory.CreateGarageDoor(smartImplant).Publish();
         }
     }
 

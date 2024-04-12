@@ -17,7 +17,7 @@ public interface IMultiLevelSwitchEventHandler
     Task Handle(MqttApplicationMessageReceivedEventArgs e);
 }
 
-internal class MultiLevelSwitchEventHandler(ILogger<MultiLevelSwitchEventHandler> logger, IStateStorageService stateStorageService, IMultiLevelSwitchService multiLevelSwitchService) : IMultiLevelSwitchEventHandler
+internal class MultiLevelSwitchEventHandler(ILogger<MultiLevelSwitchEventHandler> logger, IStateStore stateStorageService, IMultiLevelSwitchService multiLevelSwitchService) : IMultiLevelSwitchEventHandler
 {
     public async Task Handle(MqttApplicationMessageReceivedEventArgs e)
     {
@@ -27,13 +27,28 @@ internal class MultiLevelSwitchEventHandler(ILogger<MultiLevelSwitchEventHandler
             logger.LogError("message not in JSON format.");
             return;
         }
+        multiLevelSwitch.value = PadValueToHundred(multiLevelSwitch.value);
 
-        var expiryString = stateStorageService.GetState(name + "_zwave");
+        var expiryString = stateStorageService.GetState(name + "_multilevel");
         if (ushort.TryParse(expiryString, out ushort expiry) && expiry == multiLevelSwitch.value)
         {
             return;
         }
 
+        var cooloff = stateStorageService.GetState(name + "_multilevel_cooloff");
+        if(cooloff != null)
+        {
+            return;
+        }
+
+        stateStorageService.SetExpiringState(name + "_multilevel_cooloff", "", TimeSpan.FromSeconds(5));
+
         multiLevelSwitchService[name]?.SetLevel(multiLevelSwitch.value);
+    }
+
+    // Zwave Multilevel Switch only goes up to 99 (0 - 99), we want 100 for compatibility.
+    private static ushort PadValueToHundred(ushort value)
+    {
+        return (ushort)(value == 99 ? 100 : value);
     }
 }

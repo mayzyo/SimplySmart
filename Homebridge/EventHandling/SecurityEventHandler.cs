@@ -17,7 +17,7 @@ public interface ISecurityEventHandler
     Task Handle(MqttApplicationMessageReceivedEventArgs e);
 }
 
-internal class SecurityEventHandler(ILogger<SecurityEventHandler> logger, IHouseService houseService) : ISecurityEventHandler
+internal class SecurityEventHandler(ILogger<ISecurityEventHandler> logger, IHouseService houseService) : ISecurityEventHandler
 {
     public async Task Handle(MqttApplicationMessageReceivedEventArgs e)
     {
@@ -25,17 +25,17 @@ internal class SecurityEventHandler(ILogger<SecurityEventHandler> logger, IHouse
 
         logger.LogInformation("House security triggered");
         var command = ConvertMessage(message);
-        houseService.Security.Trigger(command);
+        await houseService.Security.Trigger(command);
     }
 
     private static HouseSecurityCommand ConvertMessage(string message)
     {
         switch (message)
         {
-            case "D": return HouseSecurityCommand.OFF;
-            case "NA": return HouseSecurityCommand.NIGHT;
-            case "AA": return HouseSecurityCommand.AWAY;
-            case "SA": return HouseSecurityCommand.HOME;
+            case "D": return HouseSecurityCommand.SET_OFF;
+            case "NA": return HouseSecurityCommand.SET_NIGHT;
+            case "AA": return HouseSecurityCommand.SET_AWAY;
+            case "SA": return HouseSecurityCommand.SET_HOME;
             default: throw new Exception("Undefined value received from homebridge security");
         }
     }

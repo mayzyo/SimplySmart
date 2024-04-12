@@ -15,7 +15,7 @@ public interface IAreaOccupantFactory
     IAreaOccupant CreateAreaOccupant(MultiSensor multisensor);
 }
 
-internal class AreaOccupantFactory(IStateStorageService stateStorageService, ILightSwitchService lightSwitchService) : IAreaOccupantFactory
+internal class AreaOccupantFactory(IStateStore stateStorageService, ILightSwitchService lightSwitchService) : IAreaOccupantFactory
 {
     public IAreaOccupant CreateAreaOccupant(Camera camera)
     {

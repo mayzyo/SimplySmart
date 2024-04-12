@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace SimplySmart.Core.Services;
 
-internal class InMemoryStateStorageService : IStateStorageService
+internal class InMemoryStateStore : IStateStore
 {
     readonly Dictionary<string, string> states = [];
 
@@ -16,7 +16,7 @@ internal class InMemoryStateStorageService : IStateStorageService
         return states.GetValueOrDefault(key);
     }
 
-    public void SetExpiringState(string key, string datetime)
+    public void SetExpiringState(string key, string datetime, TimeSpan duration)
     {
         throw new NotImplementedException();
     }

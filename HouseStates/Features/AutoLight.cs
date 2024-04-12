@@ -14,11 +14,11 @@ public interface IAutoLight
 {
     AutoLightState State { get; }
     IAutoLight Connect();
-    void Publish();
-    void Trigger(AutoLightCommand command);
+    Task Publish();
+    Task Trigger(AutoLightCommand command);
 }
 
-internal class AutoLight(IStateStorageService stateStorageService, IHomebridgeEventSender homebridgeEventSender, ILightSwitchService lightSwitchService) : IAutoLight
+internal class AutoLight(IStateStore stateStorageService, IHomebridgeEventSender homebridgeEventSender, ILightSwitchService lightSwitchService) : IAutoLight
 {
     public AutoLightState State { get { return stateMachine.State; } }
     public readonly StateMachine<AutoLightState, AutoLightCommand> stateMachine = new(
@@ -38,24 +38,28 @@ internal class AutoLight(IStateStorageService stateStorageService, IHomebridgeEv
     public IAutoLight Connect()
     {
         stateMachine.Configure(AutoLightState.OFF)
+            .OnEntryAsync(DisableAuto)
+            .OnActivateAsync(DisableAuto)
             .Permit(AutoLightCommand.ON, AutoLightState.ON)
-            .OnEntryAsync(DisableAuto);
+            .Ignore(AutoLightCommand.OFF);
 
         stateMachine.Configure(AutoLightState.ON)
+            .OnEntryAsync(EnableAuto)
+            .OnActivateAsync(EnableAuto)
             .Permit(AutoLightCommand.OFF, AutoLightState.OFF)
-            .OnEntryAsync(EnableAuto);
+            .Ignore(AutoLightCommand.ON);
 
         return this;
     }
 
-    public void Publish()
+    public async Task Publish()
     {
-        stateMachine.Activate();
+        await stateMachine.ActivateAsync();
     }
 
-    public void Trigger(AutoLightCommand command)
+    public async Task Trigger(AutoLightCommand command)
     {
-        stateMachine.FireAsync(command);
+        await stateMachine.FireAsync(command);
     }
 
     private async Task DisableAuto()

@@ -16,7 +16,7 @@ public interface IFanFactory
     IFan CreateFan(PowerSwitch config);
 }
 
-internal class FanFactory(IStateStorageService stateStorageService, IHomebridgeEventSender homebridgeEventSender, IZwaveEventSender zwaveEventSender) : IFanFactory
+internal class FanFactory(IStateStore stateStorageService, IHomebridgeEventSender homebridgeEventSender, IZwaveEventSender zwaveEventSender) : IFanFactory
 {
     public IFan CreateFan(PowerSwitch config) =>
         new Fan(stateStorageService, config.name, homebridgeEventSender, zwaveEventSender)

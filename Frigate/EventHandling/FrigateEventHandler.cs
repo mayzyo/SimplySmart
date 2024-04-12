@@ -23,7 +23,7 @@ public interface IFrigateEventHandler
     Task Handle(MqttApplicationMessageReceivedEventArgs e);
 }
 
-public class FrigateEventHandler(ILogger<FrigateEventHandler> logger, IOptions<ApplicationConfig> options, IHouseService houseService, IPassthroughEventSender passthroughEventSender) : IFrigateEventHandler
+public class FrigateEventHandler(ILogger<IFrigateEventHandler> logger, IOptions<ApplicationConfig> options, IHouseService houseService, IPassthroughEventSender passthroughEventSender) : IFrigateEventHandler
 {
     public async Task Handle(MqttApplicationMessageReceivedEventArgs e)
     {

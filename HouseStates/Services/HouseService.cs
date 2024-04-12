@@ -12,7 +12,7 @@ public interface IHouseService
 {
     IHouseSecurity Security { get; }
     IAutoLight AutoLight { get; }
-    void PublishAll();
+    Task PublishAll();
 }
 
 internal class HouseService(IAutoLightFactory autoLightFactory, IHouseSecurityFactory houseSecurityFactory) : IHouseService
@@ -24,9 +24,9 @@ internal class HouseService(IAutoLightFactory autoLightFactory, IHouseSecurityFa
         get { return autoLightFactory.CreateAutoLight(); }
     }
 
-    public void PublishAll()
+    public async Task PublishAll()
     {
-        Security.Publish();
-        AutoLight.Publish();
+        await Security.Publish();
+        await AutoLight.Publish();
     }
 }

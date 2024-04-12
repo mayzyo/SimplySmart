@@ -18,7 +18,7 @@ public interface IBinarySwitchService
 
 internal class BinarySwitchService(
     IOptions<ApplicationConfig> options,
-    ILogger<BinarySwitchService> logger,
+    ILogger<IBinarySwitchService> logger,
     ILightSwitchFactory lightSwitchFactory,
     IFanFactory fanFactory,
     IGarageDoorFactory garageDoorFactory
@@ -63,7 +63,7 @@ internal class BinarySwitchService(
             return false;
         }
 
-        lightSwitch = options.Value.lightSwitches.Where(e => e.name == key && e.isDimmer == false).FirstOrDefault();
+        lightSwitch = options.Value.lightSwitches.Where(e => e.name == key && e.isDimmer == null).FirstOrDefault();
         return true;
     }
 

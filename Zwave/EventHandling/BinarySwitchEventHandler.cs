@@ -17,7 +17,7 @@ public interface IBinarySwitchEventHandler
     Task Handle(MqttApplicationMessageReceivedEventArgs e);
 }
 
-internal class BinarySwitchEventHandler(ILogger<BinarySwitchEventHandler> logger, IStateStorageService stateStorageService, IBinarySwitchService binarySwitchService) : IBinarySwitchEventHandler
+internal class BinarySwitchEventHandler(ILogger<IBinarySwitchEventHandler> logger, IStateStore stateStorageService, IBinarySwitchService binarySwitchService) : IBinarySwitchEventHandler
 {
     public async Task Handle(MqttApplicationMessageReceivedEventArgs e)
     {
@@ -28,7 +28,7 @@ internal class BinarySwitchEventHandler(ILogger<BinarySwitchEventHandler> logger
             return;
         }
 
-        var expiry = stateStorageService.GetState(name + "_zwave");
+        var expiry = stateStorageService.GetState(name + "_binary");
         if(expiry != null && (expiry == "true") == binarySwitch.value)
         {
             return;

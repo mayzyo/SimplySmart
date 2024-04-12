@@ -15,23 +15,39 @@ public class FanTests
 {
     private readonly Mock<IHomebridgeEventSender> homebridgeEventSenderMock;
     private readonly Mock<IZwaveEventSender> zwaveEventSenderMock;
-    private readonly Mock<IStateStorageService> stateStorageMock;
+    private readonly Mock<IStateStore> stateStorageServiceMock;
     private readonly Fan fan;
 
     string mockState = ApplianceState.OFF.ToString();
 
     public FanTests()
     {
-        stateStorageMock = new Mock<IStateStorageService>();
-        stateStorageMock.Setup(s => s.GetState("TestFan"))
+        stateStorageServiceMock = new Mock<IStateStore>();
+        stateStorageServiceMock.Setup(s => s.GetState("TestFan"))
             .Returns(() => mockState.ToString());
-        stateStorageMock.Setup(s => s.UpdateState(It.IsAny<string>(), It.IsAny<string>()))
+        stateStorageServiceMock.Setup(s => s.UpdateState(It.IsAny<string>(), It.IsAny<string>()))
             .Callback((string a, string b) => mockState = b);
 
         homebridgeEventSenderMock = new Mock<IHomebridgeEventSender>();
         zwaveEventSenderMock = new Mock<IZwaveEventSender>();
-        fan = new Fan(stateStorageMock.Object, "TestFan", homebridgeEventSenderMock.Object, zwaveEventSenderMock.Object);
+        fan = new Fan(stateStorageServiceMock.Object, "TestFan", homebridgeEventSenderMock.Object, zwaveEventSenderMock.Object);
         fan.Connect();
+    }
+
+    [Fact]
+    public async Task Publish_ShouldActivateStateMachine()
+    {
+        // Arrange
+        mockState = ApplianceState.ON.ToString();
+
+        // Act
+        await fan.Publish();
+
+        // Assert
+        Assert.Equal(ApplianceState.ON, fan.State);
+        homebridgeEventSenderMock.Verify(x => x.FanOn("TestFan"), Times.Once);
+        zwaveEventSenderMock.Verify(x => x.BinarySwitchOn("TestFan"), Times.Once);
+        stateStorageServiceMock.Verify(x => x.UpdateState("TestFan", mockState), Times.Never);
     }
 
     [Fact]

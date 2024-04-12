@@ -90,6 +90,7 @@ public class EventBusService(ILogger<EventBusService> logger, IServiceProvider s
 
             new MqttTopicFilterBuilder().WithTopic(IFanEventHandler.MQTT_TOPIC).Build(),
             new MqttTopicFilterBuilder().WithTopic(ILightSwitchEventHandler.MQTT_TOPIC).Build(),
+            new MqttTopicFilterBuilder().WithTopic(IDimmerLightSwitchEventHandler.MQTT_TOPIC).Build(),
             new MqttTopicFilterBuilder().WithTopic(IGarageDoorOpenerEventHandler.MQTT_TOPIC).Build(),
             new MqttTopicFilterBuilder().WithTopic(ISwitchEventHandler.MQTT_TOPIC).Build(),
             new MqttTopicFilterBuilder().WithTopic(ISecurityEventHandler.MQTT_TOPIC).Build(),
@@ -105,7 +106,7 @@ public class EventBusService(ILogger<EventBusService> logger, IServiceProvider s
     {
         return
         [
-            new MqttTopicFilterBuilder().WithTopic(IBinarySwitchEventHandler.MQTT_TOPIC).Build(),
+            //new MqttTopicFilterBuilder().WithTopic(IBinarySwitchEventHandler.MQTT_TOPIC).Build(),
         ];
     }
 
@@ -174,7 +175,7 @@ public class EventBusService(ILogger<EventBusService> logger, IServiceProvider s
         else if (MqttTopicFilterComparer.Compare(topic, INotificationEventHandler.MQTT_TOPIC) == MqttTopicFilterCompareResult.IsMatch)
         {
             var handler = scope.ServiceProvider.GetRequiredService<INotificationEventHandler>();
-            await handler.HandleEvent(e);
+            await handler.Handle(e);
         }
     }
 

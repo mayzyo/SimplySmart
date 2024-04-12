@@ -14,10 +14,9 @@ namespace SimplySmart.HouseStates.Services;
 public interface IAreaOccupantService
 {
     IAreaOccupant? this[string key] { get; }
-    bool Exists(string key);
 }
 
-internal class AreaOccupantService(IOptions<ApplicationConfig> options, ILogger<AreaOccupantService> logger, IAreaOccupantFactory areaOccupantFactory) : IAreaOccupantService
+internal class AreaOccupantService(IOptions<ApplicationConfig> options, ILogger<IAreaOccupantService> logger, IAreaOccupantFactory areaOccupantFactory) : IAreaOccupantService
 {
     public IAreaOccupant? this[string key]
     {
@@ -33,17 +32,9 @@ internal class AreaOccupantService(IOptions<ApplicationConfig> options, ILogger<
                 return areaOccupantFactory.CreateAreaOccupant(multiSensor);
             }
 
-            logger.LogError($"Area Occupant with {key} does not exist");
+            //logger.LogError($"Area Occupant with {key} does not exist");
             return null;
         }
-    }
-
-    private readonly ILogger<AreaOccupantService> logger = logger;
-    private readonly Dictionary<string, IAreaOccupant> states = [];
-
-    public bool Exists(string key)
-    {
-        return states.ContainsKey(key);
     }
 
     bool TryGetCamera(string key, out Camera? camera)

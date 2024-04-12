@@ -14,11 +14,11 @@ namespace SimplySmart.DeviceStates.Services;
 public interface ILightSwitchService
 {
     ILightSwitch? this[string key] { get; }
-    void PublishAll();
+    Task PublishAll();
     void SetAllToAuto(bool command);
 }
 
-internal class LightSwitchService(IOptions<ApplicationConfig> options, ILogger logger, ILightSwitchFactory lightSwitchFactory) : ILightSwitchService
+internal class LightSwitchService(IOptions<ApplicationConfig> options, ILogger<ILightSwitchService> logger, ILightSwitchFactory lightSwitchFactory) : ILightSwitchService
 {
     public ILightSwitch? this[string key]
     {
@@ -45,30 +45,28 @@ internal class LightSwitchService(IOptions<ApplicationConfig> options, ILogger l
         }
     }
 
-    public void PublishAll()
+    public async Task PublishAll()
     {
         foreach (var lightSwitch in GetAllLightSwitch())
         {
             if (lightSwitch.isDimmer == true)
             {
-                lightSwitchFactory.CreateDimmerLightSwitch(lightSwitch, lightSwitch.stayOn).Publish();
+                await lightSwitchFactory.CreateDimmerLightSwitch(lightSwitch, lightSwitch.stayOn).Publish();
             }
             else
             {
-                lightSwitchFactory.CreateLightSwitch(lightSwitch, lightSwitch.stayOn).Publish();
+                await lightSwitchFactory.CreateLightSwitch(lightSwitch, lightSwitch.stayOn).Publish();
             }
         }
 
         foreach (var powerSwitch in GetAllPowerSwitch())
         {
-            lightSwitchFactory.CreateLightSwitch(powerSwitch, null).Publish();
+            await lightSwitchFactory.CreateLightSwitch(powerSwitch, null).Publish();
         }
     }
 
     public void SetAllToAuto(bool command)
     {
-        logger.LogInformation("All light switch triggered");
-
         foreach (var lightSwitchConfig in GetAllLightSwitch())
         {
             ILightSwitch lightSwitch;
@@ -104,6 +102,8 @@ internal class LightSwitchService(IOptions<ApplicationConfig> options, ILogger l
                 lightSwitch.DisableAuto();
             }
         }
+
+        logger.LogInformation("Auto is enabled on all lights");
     }
 
     bool TryGetLightSwitch(string key, out Core.Models.LightSwitch? lightSwitch)

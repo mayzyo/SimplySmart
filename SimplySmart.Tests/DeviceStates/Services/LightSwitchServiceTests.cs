@@ -94,7 +94,7 @@ public class LightSwitchServiceTests
     }
 
     [Fact]
-    public void PublishAll_WithLightSwitchesAndPowerSwitches_PublishesAllSwitches()
+    public async Task PublishAll_WithLightSwitchesAndPowerSwitches_PublishesAllSwitches()
     {
         // Arrange
         var lightSwitch1 = new SimplySmart.Core.Models.LightSwitch { name = "light1", isDimmer = false, stayOn = 13000 };
@@ -114,7 +114,7 @@ public class LightSwitchServiceTests
         lightSwitchFactoryMock.Setup(x => x.CreateLightSwitch(powerSwitch1, null)).Returns(lightSwitchMock2.Object);
 
         // Act
-        lightSwitchService.PublishAll();
+        await lightSwitchService.PublishAll();
 
         // Assert
         lightSwitchMock1.Verify(x => x.Publish(), Times.Once);

@@ -15,45 +15,42 @@ public interface IDimmerLightSwitch : ILightSwitch, IMultiLevelSwitch
     ushort Brightness { get; }
 }
 
-public class DimmerLightSwitch(
-    IStateStorageService stateStorage,
-    IHomebridgeEventSender homebridgeEventSender,
-    IZwaveEventSender zwaveEventSender,
-    string name,
-    int? stayOn
-) : LightSwitch(
-    stateStorage,
-    homebridgeEventSender,
-    zwaveEventSender,
-    name,
-    stayOn
-), IDimmerLightSwitch
+public class DimmerLightSwitch : LightSwitch, IDimmerLightSwitch
 {
     public ushort Brightness
     {
-        get {
-            var brightnessString = stateStorage.GetState(name + "_brightness") ?? "0";
-            if (ushort.TryParse(brightnessString, out ushort brightness))
-            {
-                return brightness;
-            }
-
-            return 0;
-        }
-        set { stateStorage.UpdateState(name + "_brightness", value.ToString()); }
+        get { return brightness; }
     }
 
+    ushort brightness = 0;
     ushort newBrightness = 0;
+
+    public DimmerLightSwitch(
+        IStateStore stateStorage,
+        IHomebridgeEventSender homebridgeEventSender,
+        IZwaveEventSender zwaveEventSender,
+        string name,
+        int? stayOn
+    ) : base(
+        stateStorage,
+        homebridgeEventSender,
+        zwaveEventSender,
+        name,
+        stayOn
+    )
+    {
+
+    }
 
     public new IDimmerLightSwitch Connect()
     {
-        base.Connect();
-
         stateMachine.Configure(LightSwitchState.ON)
-            .OnEntry(() => Brightness = newBrightness);
+            .OnEntry(SetBrightness);
 
         stateMachine.Configure(LightSwitchState.OFF)
-            .OnEntry(() => Brightness = newBrightness);
+            .OnEntry(SetBrightness);
+
+        base.Connect();
 
         return this;
     }
@@ -66,19 +63,31 @@ public class DimmerLightSwitch(
 
     public override async Task SetToOn(bool isOn)
     {
-        newBrightness = (ushort)(isOn ? 100 : 0);
+        if(isOn && brightness == 0)
+        {
+            newBrightness = 100;
+        }
+        else
+        {
+            newBrightness = brightness;
+        }
+
         await base.SetToOn(isOn);
     }
 
     public override async Task AutoSetToOn()
     {
-        newBrightness = 100;
+        if (brightness == 0)
+        {
+            newBrightness = 100;
+        }
+
         await base.AutoSetToOn();
     }
 
     public override async Task AutoSetToOff()
     {
-        newBrightness = 0;
+        newBrightness = brightness;
         await base.AutoSetToOff();
     }
 
@@ -89,9 +98,44 @@ public class DimmerLightSwitch(
             .IgnoreIf(LightSwitchCommand.TURN_ON, () => Brightness == newBrightness);
     }
 
+    protected override LightSwitchState InitialState()
+    {
+        var brightnessString = stateStorage.GetState(name + "_brightness") ?? "0";
+        if (ushort.TryParse(brightnessString, out ushort brightness))
+        {
+            this.brightness = brightness;
+        }
+
+        var stateString = stateStorage.GetState(name);
+        if (Enum.TryParse(stateString, out LightSwitchState state))
+        {
+            if(this.brightness == 0)
+            {
+                return LightSwitchState.OFF;
+            }
+            return state;
+        }
+
+        return LightSwitchState.OFF;
+    }
+
     protected override async Task SendOnEvents()
     {
-        await zwaveEventSender.MultiLevelSwitchUpdate(name, newBrightness);
-        await homebridgeEventSender.LightSwitchOn(name, newBrightness);
+        await zwaveEventSender.MultiLevelSwitchUpdate(name, Brightness);
+        await homebridgeEventSender.DimmerBrightness(name, Brightness);
+        await homebridgeEventSender.LightSwitchOn(name);
+    }
+
+    protected override async Task SendOffEvents()
+    {
+        await zwaveEventSender.MultiLevelSwitchUpdate(name, 0);
+        await homebridgeEventSender.DimmerBrightness(name, Brightness);
+        await homebridgeEventSender.LightSwitchOff(name);
+    }
+
+    void SetBrightness()
+    {
+        brightness = newBrightness;
+        stateStorage.UpdateState(name + "_brightness", newBrightness.ToString());
     }
 }

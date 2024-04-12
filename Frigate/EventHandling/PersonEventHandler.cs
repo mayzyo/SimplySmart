@@ -1,7 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
-using MQTTnet;
+﻿using MQTTnet;
 using MQTTnet.Client;
-using SimplySmart.HouseStates.Areas;
 using SimplySmart.HouseStates.Services;
 using System;
 using System.Collections.Generic;
@@ -14,7 +12,7 @@ public interface IPersonEventHandler
     Task Handle(MqttApplicationMessageReceivedEventArgs e);
 }
 
-internal class PersonEventHandler(ILogger<PersonEventHandler> logger, IAreaOccupantService areaOccupantService) : IPersonEventHandler
+internal class PersonEventHandler(IAreaOccupantService areaOccupantService) : IPersonEventHandler
 {
     public async Task Handle(MqttApplicationMessageReceivedEventArgs e)
     {
@@ -22,15 +20,6 @@ internal class PersonEventHandler(ILogger<PersonEventHandler> logger, IAreaOccup
         var message = e.ApplicationMessage.ConvertPayloadToString();
         var count = int.Parse(message);
 
-        ChangeOccupantState(areaName, count);
-    }
-
-    private void ChangeOccupantState(string areaName, int count)
-    {
-        if (areaOccupantService.Exists(areaName))
-        {
-            var command = count != 0 ? AreaOccupantCommand.SET_MOVING : AreaOccupantCommand.SET_EMPTY;
-            areaOccupantService[areaName].Trigger(command);
-        }
+        areaOccupantService[areaName]?.SetMoving(count != 0);
     }
 }

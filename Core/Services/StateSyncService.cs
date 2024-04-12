@@ -16,7 +16,7 @@ public interface IStateSyncService
 }
 
 internal class StateSyncService(
-    ILogger<StateSyncService> logger,
+    ILogger<IStateSyncService> logger,
     IHostedService eventBusService,
     IFanService fanService,
     ILightSwitchService lightSwitchService,
@@ -27,12 +27,13 @@ internal class StateSyncService(
     public async Task Synchronise()
     {
         logger.LogInformation("Synchronise device state between modules started");
-        fanService.PublishAll();
-        //lightSwitchService.PublishAll();
-        //accessPointService.PublishAll();
+        await fanService.PublishAll();
+        await lightSwitchService.PublishAll();
+        await garageDoorService.PublishAll();
 
-        //houseService.PublishAll();
+        await houseService.PublishAll();
 
+        await Task.Delay(10000);
         await ((EventBusService)eventBusService).CompleteSyncStateAsync();
     }
 }

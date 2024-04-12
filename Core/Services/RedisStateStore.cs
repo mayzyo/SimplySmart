@@ -6,16 +6,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using YamlDotNet.Core.Tokens;
 
 namespace SimplySmart.Core.Services;
 
-internal class RedisStateStorageService : IDisposable, IStateStorageService
+internal class RedisStateStore : IDisposable, IStateStore
 {
     readonly ConnectionMultiplexer redis;
     readonly IDatabase db;
 
-    public RedisStateStorageService()
+    public RedisStateStore()
     {
         _ = int.TryParse(Environment.GetEnvironmentVariable("REDIS_DATABASE") ?? "0", out var database);
 
@@ -46,9 +45,9 @@ internal class RedisStateStorageService : IDisposable, IStateStorageService
         db.StringSet(key, value);
     }
 
-    public void SetExpiringState(string key, string value)
+    public void SetExpiringState(string key, string value, TimeSpan duration)
     {
-        db.StringSet(key, value, new TimeSpan(1000));
+        db.StringSet(key, value, duration);
     }
 
     static string GetCredentials()

@@ -11,10 +11,10 @@ namespace SimplySmart.HouseStates.Areas;
 public interface IAreaOccupant
 {
     AreaOccupantState State { get; }
-    void Trigger(AreaOccupantCommand command);
+    void SetMoving(bool isMoving);
 }
 
-public class AreaOccupant(IStateStorageService stateStorageService, string name) : IAreaOccupant
+public class AreaOccupant(IStateStore stateStorageService, string name) : IAreaOccupant
 {
     public AreaOccupantState State { get { return stateMachine.State; } }
     public readonly StateMachine<AreaOccupantState, AreaOccupantCommand> stateMachine = new(
@@ -62,9 +62,9 @@ public class AreaOccupant(IStateStorageService stateStorageService, string name)
         return this;
     }
 
-    public void Trigger(AreaOccupantCommand command)
+    public void SetMoving(bool isMoving)
     {
-        stateMachine.Fire(command);
+        stateMachine.Fire(isMoving ? AreaOccupantCommand.SET_MOVING : AreaOccupantCommand.SET_EMPTY);
     }
 }
 

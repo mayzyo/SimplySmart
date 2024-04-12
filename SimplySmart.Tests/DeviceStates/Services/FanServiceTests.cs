@@ -59,7 +59,7 @@ public class FanServiceTests
     }
 
     [Fact]
-    public void PublishAll_WithFans_PublishesAllFans()
+    public async Task PublishAll_WithFans_PublishesAllFans()
     {
         // Arrange
         var powerSwitches = new[]
@@ -77,7 +77,7 @@ public class FanServiceTests
         fanFactoryMock.Setup(x => x.CreateFan(powerSwitches[1])).Returns(fans[1].Object);
 
         // Act
-        fanService.PublishAll();
+        await fanService.PublishAll();
 
         // Assert
         fans[0].Verify(x => x.Publish(), Times.Once);
@@ -85,13 +85,13 @@ public class FanServiceTests
     }
 
     [Fact]
-    public void PublishAll_WithoutFans_DoesNotPublish()
+    public async Task PublishAll_WithoutFans_DoesNotPublish()
     {
         // Arrange
         optionsMock.Setup(x => x.Value.powerSwitches).Returns([]);
 
         // Act
-        fanService.PublishAll();
+        await fanService.PublishAll();
 
         // Assert
         fanFactoryMock.Verify(x => x.CreateFan(It.IsAny<PowerSwitch>()), Times.Never);

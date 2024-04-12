@@ -18,7 +18,7 @@ namespace SimplySmart.DeviceStates.Devices;
 public interface ILightSwitch : IBinarySwitch, IAutoSwitch
 {
     LightSwitchState State { get; }
-    void Publish();
+    Task Publish();
     Task EnableAuto();
     Task DisableAuto();
 }
@@ -33,7 +33,7 @@ public class LightSwitch : ILightSwitch
     public readonly string name;
 
     protected BroadcastSource source;
-    protected readonly IStateStorageService stateStorage;
+    protected readonly IStateStore stateStorage;
     protected readonly IHomebridgeEventSender homebridgeEventSender;
     protected readonly IZwaveEventSender zwaveEventSender;
 
@@ -41,7 +41,7 @@ public class LightSwitch : ILightSwitch
 
     public BroadcastSource Source { get { return source; } }
 
-    public LightSwitch(IStateStorageService stateStorage, IHomebridgeEventSender homebridgeEventSender, IZwaveEventSender zwaveEventSender, string name, int? stayOn)
+    public LightSwitch(IStateStore stateStorage, IHomebridgeEventSender homebridgeEventSender, IZwaveEventSender zwaveEventSender, string name, int? stayOn)
     {
         this.stateStorage = stateStorage;
         this.homebridgeEventSender = homebridgeEventSender;
@@ -49,16 +49,7 @@ public class LightSwitch : ILightSwitch
         this.name = name;
 
         stateMachine = new(
-            () =>
-            {
-                var stateString = stateStorage.GetState(name);
-                if (Enum.TryParse(stateString, out LightSwitchState state))
-                {
-                    return state;
-                }
-
-                return LightSwitchState.OFF;
-            },
+            InitialState,
             s => stateStorage.UpdateState(name, s.ToString())
         );
 
@@ -70,6 +61,7 @@ public class LightSwitch : ILightSwitch
     {
         stateMachine.Configure(LightSwitchState.OFF)
             .OnEntryAsync(SendOffEvents)
+            .OnActivateAsync(SendOffEvents)
             .Permit(LightSwitchCommand.TURN_ON, LightSwitchState.ON)
             .Permit(LightSwitchCommand.ENABLE_AUTO, LightSwitchState.AUTO_OFF)
             .Ignore(LightSwitchCommand.TURN_OFF)
@@ -79,6 +71,7 @@ public class LightSwitch : ILightSwitch
         ConfigureOnToOnGuardClause();
         stateMachine.Configure(LightSwitchState.ON)
             .OnEntryAsync(SendOnEvents)
+            .OnActivateAsync(SendOnEvents)
             .Permit(LightSwitchCommand.TURN_OFF, LightSwitchState.OFF)
             .Permit(LightSwitchCommand.ENABLE_AUTO, LightSwitchState.AUTO_FORCED_ON)
             .Ignore(LightSwitchCommand.AUTO_OFF)
@@ -95,13 +88,13 @@ public class LightSwitch : ILightSwitch
             .SubstateOf(LightSwitchState.ON)
             .Permit(LightSwitchCommand.AUTO_OFF, LightSwitchState.AUTO_PENDING_OFF)
             .Permit(LightSwitchCommand.TURN_OFF, LightSwitchState.AUTO_OFF)
-            .Permit(LightSwitchCommand.TURN_ON, LightSwitchState.AUTO_FORCED_ON)
             .Permit(LightSwitchCommand.DISABLE_AUTO, LightSwitchState.OFF)
             .Ignore(LightSwitchCommand.AUTO_ON);
 
         stateMachine.Configure(LightSwitchState.AUTO_PENDING_OFF)
             .SubstateOf(LightSwitchState.AUTO_ON)
             .OnEntry(() => ConfigureTimer(true, triggerDelayTimer))
+            .OnActivate(() => ConfigureTimer(true, triggerDelayTimer))
             .OnExit(() => ConfigureTimer(false, triggerDelayTimer))
             .Permit(LightSwitchCommand.AUTO_ON, LightSwitchState.AUTO_ON)
             .Ignore(LightSwitchCommand.AUTO_OFF);
@@ -114,9 +107,9 @@ public class LightSwitch : ILightSwitch
         return this;
     }
 
-    public void Publish()
+    public async Task Publish()
     {
-        stateMachine.Activate();
+        await stateMachine.ActivateAsync();
     }
 
     public virtual async Task SetToOn(bool isOn)
@@ -149,6 +142,17 @@ public class LightSwitch : ILightSwitch
     {
         stateMachine.Configure(LightSwitchState.ON)
             .Ignore(LightSwitchCommand.TURN_ON);
+    }
+
+    protected virtual LightSwitchState InitialState()
+    {
+        var stateString = stateStorage.GetState(name);
+        if (Enum.TryParse(stateString, out LightSwitchState state))
+        {
+            return state;
+        }
+
+        return LightSwitchState.OFF;
     }
 
     protected virtual async Task SendOnEvents()

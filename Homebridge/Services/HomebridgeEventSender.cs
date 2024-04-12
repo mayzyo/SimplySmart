@@ -1,4 +1,5 @@
 ﻿using MQTTnet.Extensions.ManagedClient;
+using SimplySmart.Core.Abstractions;
 using SimplySmart.HouseStates.Features;
 using System;
 using System.Collections.Generic;
@@ -18,7 +19,7 @@ public interface IHomebridgeEventSender
     Task GarageDoorOpenerStopped(string name);
     Task LightSwitchOff(string triggerUri);
     Task LightSwitchOn(string triggerUri);
-    Task LightSwitchOn(string triggerUri, ushort brightness);
+    Task DimmerBrightness(string triggerUri, ushort brightness);
     Task SwitchOn(string triggerUri);
     Task SwitchOff(string triggerUri);
     Task HouseSecurityUpdate(HouseSecurityState state);
@@ -28,12 +29,12 @@ internal class HomebridgeEventSender(IManagedMqttClient mqttClient) : IHomebridg
 {
     public async Task FanOn(string triggerUri)
     {
-        await mqttClient.EnqueueAsync($"homebridge/fan/{triggerUri}/on/set", "true");
+        await mqttClient.EnqueueAsync($"homebridge/fan/{triggerUri}/on", "true");
     }
 
     public async Task FanOff(string triggerUri)
     {
-        await mqttClient.EnqueueAsync($"homebridge/fan/{triggerUri}/on/set", "false");
+        await mqttClient.EnqueueAsync($"homebridge/fan/{triggerUri}/on", "false");
     }
 
     public async Task GarageDoorOpenerOn(string triggerUri)
@@ -56,17 +57,17 @@ internal class HomebridgeEventSender(IManagedMqttClient mqttClient) : IHomebridg
         await mqttClient.EnqueueAsync($"homebridge/garage_door_opener/{triggerUri}/doorMoving/set", "false");
     }
 
-    public async Task LightSwitchOff(string triggerUri)
-    {
-        await mqttClient.EnqueueAsync($"homebridge/light_switch/{triggerUri}/set", "false");
-    }
-
     public async Task LightSwitchOn(string triggerUri)
     {
-        await mqttClient.EnqueueAsync($"homebridge/light_switch/{triggerUri}/set", "true");
+        await mqttClient.EnqueueAsync($"homebridge/light_switch/{triggerUri}", "true");
     }
 
-    public async Task LightSwitchOn(string triggerUri, ushort brightness)
+    public async Task LightSwitchOff(string triggerUri)
+    {
+        await mqttClient.EnqueueAsync($"homebridge/light_switch/{triggerUri}", "false");
+    }
+
+    public async Task DimmerBrightness(string triggerUri, ushort brightness)
     {
         await mqttClient.EnqueueAsync($"homebridge/light_switch/{triggerUri}/brightness/set", brightness.ToString());
     }

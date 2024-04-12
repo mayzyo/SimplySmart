@@ -59,7 +59,7 @@ public class GarageDoorServiceTests
     }
 
     [Fact]
-    public void PublishAll_WithGarageDoorss_PublishesAllGarageDoors()
+    public async Task PublishAll_WithGarageDoors_PublishesAllGarageDoors()
     {
         // Arrange
         var smartImplants = new[]
@@ -77,7 +77,7 @@ public class GarageDoorServiceTests
         garageDoorFactoryMock.Setup(x => x.CreateGarageDoor(smartImplants[1])).Returns(garageDoors[1].Object);
 
         // Act
-        garageDoorService.PublishAll();
+        await garageDoorService.PublishAll();
 
         // Assert
         garageDoors[0].Verify(x => x.Publish(), Times.Once);
@@ -85,13 +85,13 @@ public class GarageDoorServiceTests
     }
 
     [Fact]
-    public void PublishAll_WithoutFans_DoesNotPublish()
+    public async Task PublishAll_WithoutFans_DoesNotPublish()
     {
         // Arrange
         optionsMock.Setup(x => x.Value.powerSwitches).Returns([]);
 
         // Act
-        garageDoorService.PublishAll();
+        await garageDoorService.PublishAll();
 
         // Assert
         garageDoorFactoryMock.Verify(x => x.CreateGarageDoor(It.IsAny<SmartImplant>()), Times.Never);

@@ -14,10 +14,10 @@ public interface IFan : IAppliance, IBinarySwitch
 {
     ApplianceState State { get; }
     IFan Connect();
-    void Publish();
+    Task Publish();
 }
 
-internal class Fan(IStateStorageService stateStorage, string name, IHomebridgeEventSender homebridgeEventSender, IZwaveEventSender zwaveEventSender) : IFan
+internal class Fan(IStateStore stateStorage, string name, IHomebridgeEventSender homebridgeEventSender, IZwaveEventSender zwaveEventSender) : IFan
 {
     public ApplianceState State { get { return stateMachine.State; } }
     public readonly StateMachine<ApplianceState, ApplianceCommand> stateMachine = new(
@@ -39,20 +39,22 @@ internal class Fan(IStateStorageService stateStorage, string name, IHomebridgeEv
     {
         stateMachine.Configure(ApplianceState.OFF)
             .OnEntryAsync(SetToOff)
+            .OnActivateAsync(SetToOff)
             .Permit(ApplianceCommand.ON, ApplianceState.ON)
             .Ignore(ApplianceCommand.OFF);
 
         stateMachine.Configure(ApplianceState.ON)
             .OnEntryAsync(SetToOn)
+            .OnActivateAsync(SetToOn)
             .Permit(ApplianceCommand.OFF, ApplianceState.OFF)
             .Ignore(ApplianceCommand.ON);
 
         return this;
     }
 
-    public void Publish()
+    public async Task Publish()
     {
-        stateMachine.Activate();
+        await stateMachine.ActivateAsync();
     }
 
     public async Task SetToOn(bool isOn)

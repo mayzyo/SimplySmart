@@ -15,7 +15,7 @@ public interface IAutoLightFactory
     IAutoLight CreateAutoLight();
 }
 
-internal class AutoLightFactory(IStateStorageService stateStorageService, IHomebridgeEventSender homebridgeEventSender, ILightSwitchService lightSwitchService) : IAutoLightFactory
+internal class AutoLightFactory(IStateStore stateStorageService, IHomebridgeEventSender homebridgeEventSender, ILightSwitchService lightSwitchService) : IAutoLightFactory
 {
     public IAutoLight CreateAutoLight() => new AutoLight(stateStorageService, homebridgeEventSender, lightSwitchService).Connect();
 }

@@ -21,6 +21,7 @@ using SimplySmart.Nodemation.EventHandling;
 using SimplySmart.Nodemation.Services;
 using SimplySmart.HouseStates.Factories;
 using SimplySmart.Core.Abstractions;
+using Quartz;
 
 // Reference: https://code-maze.com/dotnet-factory-pattern-dependency-injection/
 
@@ -48,7 +49,12 @@ Host.CreateDefaultBuilder(args)
             return mqttFactory.CreateManagedMqttClient();
         });
         services.AddHostedService<EventBusService>();
-        services.AddSingleton<IStateStorageService, RedisStateStorageService>();
+        services.AddQuartz();
+        services.AddQuartzHostedService(opt =>
+        {
+            opt.WaitForJobsToComplete = true;
+        });
+        services.AddSingleton<IStateStore, RedisStateStore>();
         services.AddScoped<IStateSyncService, StateSyncService>();
 
         // Devices Module
@@ -73,6 +79,8 @@ Host.CreateDefaultBuilder(args)
         services.AddTransient<IMultiLevelSwitchEventHandler, MultiLevelSwitchEventHandler>();
         services.AddTransient<ICentralSceneEventHandler, CentralSceneEventHandler>();
         services.AddTransient<INotificationEventHandler, NotificationEventHandler>();
+        services.AddScoped<IBinarySwitchService, BinarySwitchService>();
+        services.AddScoped<IMultiLevelSwitchService, MultiLevelSwitchService>();
 
         // Frigate Module
         services.AddTransient<IFrigateEventHandler, FrigateEventHandler>();
@@ -84,8 +92,8 @@ Host.CreateDefaultBuilder(args)
         services.AddTransient<IDimmerLightSwitchEventHandler, DimmerLightSwitchEventHandler>();
         services.AddTransient<IGarageDoorOpenerEventHandler, GarageDoorOpenerEventHandler>();
         services.AddTransient<IHomebridgeEventSender, HomebridgeEventSender>();
-        //services.AddTransient<ISwitchEventHandler, SwitchEventHandler>();
-        //services.AddTransient<ISecurityEventHandler, SecurityEventHandler>();
+        services.AddTransient<ISwitchEventHandler, SwitchEventHandler>();
+        services.AddTransient<ISecurityEventHandler, SecurityEventHandler>();
 
         // Nodemation Module
         services.AddTransient<INodemationEventSender, NodemationEventSender>();

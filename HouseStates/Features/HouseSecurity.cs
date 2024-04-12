@@ -13,11 +13,11 @@ public interface IHouseSecurity
 {
     HouseSecurityState State { get; }
     IHouseSecurity Connect();
-    void Publish();
-    void Trigger(HouseSecurityCommand command);
+    Task Publish();
+    Task Trigger(HouseSecurityCommand command);
 }
 
-internal class HouseSecurity(IStateStorageService stateStorageService, IHomebridgeEventSender homebridgeEventSender) : IHouseSecurity
+internal class HouseSecurity(IStateStore stateStorageService, IHomebridgeEventSender homebridgeEventSender) : IHouseSecurity
 {
     public HouseSecurityState State { get { return stateMachine.State; } }
     public readonly StateMachine<HouseSecurityState, HouseSecurityCommand> stateMachine = new(
@@ -36,48 +36,47 @@ internal class HouseSecurity(IStateStorageService stateStorageService, IHomebrid
 
     public IHouseSecurity Connect()
     {
-        stateMachine.OnTransitionedAsync(Transitioned);
+        stateMachine.OnTransitionedAsync(UpdateSecurityState);
 
         stateMachine.Configure(HouseSecurityState.OFF)
-            .Permit(HouseSecurityCommand.HOME, HouseSecurityState.HOME)
-            .Permit(HouseSecurityCommand.AWAY, HouseSecurityState.AWAY)
-            .Permit(HouseSecurityCommand.NIGHT, HouseSecurityState.NIGHT);
+            .Permit(HouseSecurityCommand.SET_HOME, HouseSecurityState.HOME)
+            .Permit(HouseSecurityCommand.SET_AWAY, HouseSecurityState.AWAY)
+            .Permit(HouseSecurityCommand.SET_NIGHT, HouseSecurityState.NIGHT)
+            .Ignore(HouseSecurityCommand.SET_OFF);
 
         stateMachine.Configure(HouseSecurityState.AWAY)
-            .Permit(HouseSecurityCommand.HOME, HouseSecurityState.HOME)
-            .Permit(HouseSecurityCommand.NIGHT, HouseSecurityState.NIGHT)
-            .Permit(HouseSecurityCommand.OFF, HouseSecurityState.OFF);
+            .Permit(HouseSecurityCommand.SET_HOME, HouseSecurityState.HOME)
+            .Permit(HouseSecurityCommand.SET_NIGHT, HouseSecurityState.NIGHT)
+            .Permit(HouseSecurityCommand.SET_OFF, HouseSecurityState.OFF)
+            .Ignore(HouseSecurityCommand.SET_AWAY);
 
         stateMachine.Configure(HouseSecurityState.NIGHT)
-            .Permit(HouseSecurityCommand.HOME, HouseSecurityState.HOME)
-            .Permit(HouseSecurityCommand.AWAY, HouseSecurityState.AWAY)
-            .Permit(HouseSecurityCommand.OFF, HouseSecurityState.OFF);
+            .Permit(HouseSecurityCommand.SET_HOME, HouseSecurityState.HOME)
+            .Permit(HouseSecurityCommand.SET_AWAY, HouseSecurityState.AWAY)
+            .Permit(HouseSecurityCommand.SET_OFF, HouseSecurityState.OFF)
+            .Ignore(HouseSecurityCommand.SET_NIGHT);
 
         stateMachine.Configure(HouseSecurityState.HOME)
-            .Permit(HouseSecurityCommand.NIGHT, HouseSecurityState.NIGHT)
-            .Permit(HouseSecurityCommand.AWAY, HouseSecurityState.AWAY)
-            .Permit(HouseSecurityCommand.OFF, HouseSecurityState.OFF);
+            .Permit(HouseSecurityCommand.SET_NIGHT, HouseSecurityState.NIGHT)
+            .Permit(HouseSecurityCommand.SET_AWAY, HouseSecurityState.AWAY)
+            .Permit(HouseSecurityCommand.SET_OFF, HouseSecurityState.OFF)
+            .Ignore(HouseSecurityCommand.SET_HOME);
 
         return this;
     }
 
-    public void Publish()
+    public async Task Publish()
     {
-        stateMachine.Activate();
+        await homebridgeEventSender.HouseSecurityUpdate(State);
     }
 
-    public void Trigger(HouseSecurityCommand command)
+    public async Task Trigger(HouseSecurityCommand command)
     {
-        stateMachine.FireAsync(command);
+        await stateMachine.FireAsync(command);
     }
 
-    private async Task Transitioned(StateMachine<HouseSecurityState, HouseSecurityCommand>.Transition e)
+    async Task UpdateSecurityState(StateMachine<HouseSecurityState, HouseSecurityCommand>.Transition e)
     {
-        if (e.Source == e.Destination)
-        {
-            return;
-        }
-
         await homebridgeEventSender.HouseSecurityUpdate(e.Destination);
     }
 }
@@ -92,8 +91,8 @@ public enum HouseSecurityState
 
 public enum HouseSecurityCommand
 {
-    HOME,
-    AWAY,
-    NIGHT,
-    OFF
+    SET_HOME,
+    SET_AWAY,
+    SET_NIGHT,
+    SET_OFF
 }

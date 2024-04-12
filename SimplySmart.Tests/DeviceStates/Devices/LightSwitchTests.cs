@@ -13,7 +13,7 @@ namespace SimplySmart.Tests.DeviceStates.Devices;
 
 public class LightSwitchTests
 {
-    readonly Mock<IStateStorageService> stateStorageMock;
+    readonly Mock<IStateStore> stateStorageServiceMock;
     readonly Mock<IHomebridgeEventSender> homebridgeEventSenderMock;
     readonly Mock<IZwaveEventSender> zwaveEventSenderMock;
     readonly LightSwitch lightSwitch;
@@ -22,16 +22,32 @@ public class LightSwitchTests
 
     public LightSwitchTests()
     {
-        stateStorageMock = new Mock<IStateStorageService>();
-        stateStorageMock.Setup(s => s.GetState("TestLightSwitch"))
+        stateStorageServiceMock = new Mock<IStateStore>();
+        stateStorageServiceMock.Setup(s => s.GetState("TestLightSwitch"))
             .Returns(() => mockState);
-        stateStorageMock.Setup(s => s.UpdateState("TestLightSwitch", It.IsAny<string>()))
+        stateStorageServiceMock.Setup(s => s.UpdateState("TestLightSwitch", It.IsAny<string>()))
             .Callback((string a, string b) => mockState = b);
 
         homebridgeEventSenderMock = new Mock<IHomebridgeEventSender>();
         zwaveEventSenderMock = new Mock<IZwaveEventSender>();
-        lightSwitch = new LightSwitch(stateStorageMock.Object, homebridgeEventSenderMock.Object, zwaveEventSenderMock.Object, "TestLightSwitch", null);
+        lightSwitch = new LightSwitch(stateStorageServiceMock.Object, homebridgeEventSenderMock.Object, zwaveEventSenderMock.Object, "TestLightSwitch", null);
         lightSwitch.Connect();
+    }
+
+    [Fact]
+    public async Task Publish_ShouldActivateStateMachine()
+    {
+        // Arrange
+        mockState = LightSwitchState.ON.ToString();
+
+        // Act
+        await lightSwitch.Publish();
+
+        // Assert
+        Assert.Equal(LightSwitchState.ON, lightSwitch.State);
+        homebridgeEventSenderMock.Verify(x => x.LightSwitchOn("TestLightSwitch"), Times.Once);
+        zwaveEventSenderMock.Verify(x => x.BinarySwitchOn("TestLightSwitch"), Times.Once);
+        stateStorageServiceMock.Verify(x => x.UpdateState("TestLightSwitch", mockState), Times.Never);
     }
 
     [Fact]

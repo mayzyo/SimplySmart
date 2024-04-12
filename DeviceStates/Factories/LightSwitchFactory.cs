@@ -18,7 +18,7 @@ public interface ILightSwitchFactory
     IDimmerLightSwitch CreateDimmerLightSwitch(Core.Models.LightSwitch lightSwitch, int? stayOn);
 }
 
-internal class LightSwitchFactory(IStateStorageService stateStorageService, IHomebridgeEventSender homebridgeEventSender, IZwaveEventSender zwaveEventSender) : ILightSwitchFactory
+internal class LightSwitchFactory(IStateStore stateStorageService, IHomebridgeEventSender homebridgeEventSender, IZwaveEventSender zwaveEventSender) : ILightSwitchFactory
 {
     public ILightSwitch CreateLightSwitch(Core.Models.LightSwitch lightSwitch, int? stayOn) =>
         new Devices.LightSwitch(stateStorageService, homebridgeEventSender, zwaveEventSender, lightSwitch.name, stayOn)

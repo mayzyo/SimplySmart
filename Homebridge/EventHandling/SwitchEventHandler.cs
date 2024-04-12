@@ -17,7 +17,7 @@ public interface ISwitchEventHandler
     Task Handle(MqttApplicationMessageReceivedEventArgs e);
 }
 
-internal class SwitchEventHandler(ILogger<SwitchEventHandler> logger, IHouseService houseService) : ISwitchEventHandler
+internal class SwitchEventHandler(ILogger<ISwitchEventHandler> logger, IHouseService houseService) : ISwitchEventHandler
 {
     public async Task Handle(MqttApplicationMessageReceivedEventArgs e)
     {
@@ -26,20 +26,9 @@ internal class SwitchEventHandler(ILogger<SwitchEventHandler> logger, IHouseServ
 
         if (name == "auto_light")
         {
+            logger.LogInformation("auto light triggered");
             var isOn = bool.Parse(message);
-            ChangeAutoLightState(isOn);
-        }
-    }
-
-    private void ChangeAutoLightState(bool isOn)
-    {
-        if (isOn)
-        {
-            houseService.AutoLight.Trigger(AutoLightCommand.ON);
-        }
-        else
-        {
-            houseService.AutoLight.Trigger(AutoLightCommand.OFF);
+            await houseService.AutoLight.Trigger(isOn ? AutoLightCommand.ON : AutoLightCommand.OFF);
         }
     }
 }

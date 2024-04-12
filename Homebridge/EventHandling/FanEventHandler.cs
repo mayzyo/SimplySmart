@@ -21,6 +21,7 @@ internal class FanEventHandler(IFanService fanService) : IFanEventHandler
     {
         var name = e.ApplicationMessage.Topic.Replace("homebridge/fan/", "").Replace("/on", "");
         var message = e.ApplicationMessage.ConvertPayloadToString();
+
         fanService[name]?.SetToOn(message == "true");
     }
 }

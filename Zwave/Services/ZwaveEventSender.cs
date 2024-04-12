@@ -17,11 +17,11 @@ public interface IZwaveEventSender
     Task MultiLevelSwitchUpdate(string triggerUri, ushort brightness);
 }
 
-internal class ZwaveEventSender(IManagedMqttClient mqttClient, IStateStorageService stateStorageService) : IZwaveEventSender
+internal class ZwaveEventSender(IManagedMqttClient mqttClient, IStateStore stateStorageService) : IZwaveEventSender
 {
     public async Task BinarySwitchOff(string triggerUri)
     {
-        stateStorageService.SetExpiringState(triggerUri, false.ToString());
+        stateStorageService.SetExpiringState(triggerUri + "_binary", false.ToString(), TimeSpan.FromSeconds(2));
 
         var epoch = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var payload = JsonSerializer.Serialize(new BinarySwitch { value = false, time = epoch });
@@ -30,7 +30,7 @@ internal class ZwaveEventSender(IManagedMqttClient mqttClient, IStateStorageServ
 
     public async Task BinarySwitchOn(string triggerUri)
     {
-        stateStorageService.SetExpiringState(triggerUri, true.ToString());
+        stateStorageService.SetExpiringState(triggerUri + "_binary", true.ToString(), TimeSpan.FromSeconds(2));
 
         var epoch = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var payload = JsonSerializer.Serialize(new BinarySwitch { value = true, time = epoch });
@@ -39,7 +39,7 @@ internal class ZwaveEventSender(IManagedMqttClient mqttClient, IStateStorageServ
 
     public async Task MultiLevelSwitchUpdate(string triggerUri, ushort brightness)
     {
-        stateStorageService.SetExpiringState(triggerUri, false.ToString());
+        stateStorageService.SetExpiringState(triggerUri + "_multilevel", brightness.ToString(), TimeSpan.FromSeconds(5));
 
         var epoch = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var payload = JsonSerializer.Serialize(new MultilevelSwitch { value = (ushort)(brightness == 100 ? 99 : brightness), time = epoch });

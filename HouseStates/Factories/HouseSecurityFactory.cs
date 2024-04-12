@@ -14,7 +14,7 @@ public interface IHouseSecurityFactory
     IHouseSecurity CreateHouseSecurity();
 }
 
-internal class HouseSecurityFactory(IStateStorageService stateStorageService, IHomebridgeEventSender homebridgeEventSender) : IHouseSecurityFactory
+internal class HouseSecurityFactory(IStateStore stateStorageService, IHomebridgeEventSender homebridgeEventSender) : IHouseSecurityFactory
 {
     public IHouseSecurity CreateHouseSecurity() => new HouseSecurity(stateStorageService, homebridgeEventSender).Connect();
 }

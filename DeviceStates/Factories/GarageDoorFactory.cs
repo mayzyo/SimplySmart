@@ -14,7 +14,7 @@ public interface IGarageDoorFactory
     IGarageDoor CreateGarageDoor(SmartImplant config);
 }
 
-internal class GarageDoorFactory(IStateStorageService stateStorageService, IHomebridgeEventSender homebridgeEventSender, IZwaveEventSender zwaveEventSender) : IGarageDoorFactory
+internal class GarageDoorFactory(IStateStore stateStorageService, IHomebridgeEventSender homebridgeEventSender, IZwaveEventSender zwaveEventSender) : IGarageDoorFactory
 {
     public IGarageDoor CreateGarageDoor(SmartImplant config) => 
         new GarageDoor(stateStorageService, config.name, homebridgeEventSender, zwaveEventSender)

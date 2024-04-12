@@ -10,25 +10,40 @@ public class GarageDoorTests
 {
     private readonly Mock<IHomebridgeEventSender> homebridgeEventSenderMock;
     private readonly Mock<IZwaveEventSender> zwaveEventSenderMock;
-    private readonly Mock<IStateStorageService> stateStorageMock;
+    private readonly Mock<IStateStore> stateStorageServiceMock;
     private readonly GarageDoor garageDoor;
 
     string mockState = GarageDoorState.CLOSED.ToString();
 
     public GarageDoorTests()
     {
-        stateStorageMock = new Mock<IStateStorageService>();
-        stateStorageMock.Setup(s => s.GetState("TestGarageDoor"))
+        stateStorageServiceMock = new Mock<IStateStore>();
+        stateStorageServiceMock.Setup(s => s.GetState("TestGarageDoor"))
             .Returns(() => mockState.ToString());
-        stateStorageMock.Setup(s => s.UpdateState(It.IsAny<string>(), It.IsAny<string>()))
+        stateStorageServiceMock.Setup(s => s.UpdateState(It.IsAny<string>(), It.IsAny<string>()))
             .Callback((string a, string b) => mockState = b);
 
         homebridgeEventSenderMock = new Mock<IHomebridgeEventSender>();
         zwaveEventSenderMock = new Mock<IZwaveEventSender>();
-        garageDoor = new GarageDoor(stateStorageMock.Object, "TestGarageDoor", homebridgeEventSenderMock.Object, zwaveEventSenderMock.Object);
+        garageDoor = new GarageDoor(stateStorageServiceMock.Object, "TestGarageDoor", homebridgeEventSenderMock.Object, zwaveEventSenderMock.Object);
         garageDoor.Connect();
     }
 
+    [Fact]
+    public async Task Publish_ShouldActivateStateMachine()
+    {
+        // Arrange
+        mockState = GarageDoorState.OPENED.ToString();
+
+        // Act
+        await garageDoor.Publish();
+
+        // Assert
+        Assert.Equal(GarageDoorState.OPENED, garageDoor.State);
+        homebridgeEventSenderMock.Verify(x => x.GarageDoorOpenerStopped("TestGarageDoor"), Times.Once);
+        zwaveEventSenderMock.Verify(x => x.BinarySwitchOff("TestGarageDoor"), Times.Once);
+        stateStorageServiceMock.Verify(x => x.UpdateState("TestGarageDoor", mockState), Times.Never);
+    }
 
     [Fact]
     public async Task SetToOn_ShouldSendEvent()
