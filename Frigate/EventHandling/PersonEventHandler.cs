@@ -14,12 +14,13 @@ public interface IPersonEventHandler
 
 internal class PersonEventHandler(IAreaOccupantService areaOccupantService) : IPersonEventHandler
 {
-    public async Task Handle(MqttApplicationMessageReceivedEventArgs e)
+    public Task Handle(MqttApplicationMessageReceivedEventArgs e)
     {
         var areaName = e.ApplicationMessage.Topic.Split("/")[1];
         var message = e.ApplicationMessage.ConvertPayloadToString();
         var count = int.Parse(message);
 
         areaOccupantService[areaName]?.SetMoving(count != 0);
+        return Task.CompletedTask;
     }
 }

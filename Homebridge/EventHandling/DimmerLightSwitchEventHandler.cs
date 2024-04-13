@@ -26,7 +26,7 @@ internal class DimmerLightSwitchEventHandler(ILightSwitchService lightSwitchServ
         var dimmerSwitch = lightSwitchService[name];
         if(dimmerSwitch != null)
         {
-            await ((IDimmerLightSwitch)dimmerSwitch).SetLevel(brightness);
+            await ((IDimmerLightSwitch)dimmerSwitch).SetBrightness(brightness);
         }
     }
 }

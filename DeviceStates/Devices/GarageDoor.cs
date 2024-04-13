@@ -1,6 +1,8 @@
-﻿using Quartz;
+﻿using Microsoft.Extensions.Logging;
+using Quartz;
 using SimplySmart.Core.Abstractions;
 using SimplySmart.DeviceStates.Jobs;
+using SimplySmart.Frigate.Services;
 using SimplySmart.Homebridge.Services;
 using SimplySmart.Zwave.Abstractions;
 using SimplySmart.Zwave.Services;
@@ -23,7 +25,7 @@ public interface IGarageDoor : IBinarySwitch
     Task SetToComplete();
 }
 
-internal class GarageDoor(IStateStore stateStorage, ISchedulerFactory schedulerFactory, IHomebridgeEventSender homebridgeEventSender, IZwaveEventSender zwaveEventSender, string name) : IGarageDoor
+internal class GarageDoor(ILogger<IGarageDoor> logger, IStateStore stateStore, ISchedulerFactory schedulerFactory, IHomebridgeEventSender homebridgeEventSender, IZwaveEventSender zwaveEventSender, IFrigateWebhookSender frigateWebhookSender, string name) : IGarageDoor
 {
     const int DELAY_DEFAULT = 20000;
 
@@ -31,7 +33,7 @@ internal class GarageDoor(IStateStore stateStorage, ISchedulerFactory schedulerF
     public readonly StateMachine<GarageDoorState, GarageDoorCommand> stateMachine = new(
         () =>
         {
-            var stateString = stateStorage.GetState(name);
+            var stateString = stateStore.GetState(name);
             if (Enum.TryParse(stateString, out GarageDoorState state))
             {
                 return state;
@@ -39,8 +41,23 @@ internal class GarageDoor(IStateStore stateStorage, ISchedulerFactory schedulerF
 
             return GarageDoorState.CLOSED;
         },
-        s => stateStorage.UpdateState(name, s.ToString())
+        s => stateStore.UpdateState(name, s.ToString())
     );
+
+    int RetryAttempts
+    {
+        get
+        {
+            var countString = stateStore.GetState(name + "_retries");
+            if (int.TryParse(countString, out int count))
+            {
+                return count;
+            }
+
+            return 0;
+        }
+        set { stateStore.UpdateState(name + "_retries", value.ToString()); }
+    }
 
     public async Task Publish()
     {
@@ -105,10 +122,29 @@ internal class GarageDoor(IStateStore stateStorage, ISchedulerFactory schedulerF
         await stateMachine.FireAsync(GarageDoorCommand.CLOSE);
     }
 
+    // Unused. Waiting for classifier model.
     public async Task StateVerified(bool isClosed)
     {
-        var command = isClosed ? GarageDoorCommand.COMPLETE : GarageDoorCommand.OPEN_COMPLETE;
-        await stateMachine.FireAsync(command);
+        var detectedState = isClosed ? GarageDoorState.CLOSED : GarageDoorState.OPENED;
+        if (!stateMachine.IsInState(detectedState))
+        {
+            logger.LogInformation($"State mismatch at {name}");
+            if (RetryAttempts <= 3)
+            {
+                RetryAttempts += 1;
+                await zwaveEventSender.BinarySwitchOn(name);
+            }
+            else
+            {
+                RetryAttempts = 0;
+                logger.LogError($"State continue to mismatch({detectedState}) after 3 attempts at {name}");
+            }
+        }
+        else
+        {
+            logger.LogInformation($"State in sync at {name}");
+            RetryAttempts = 0;
+        }
     }
 
     public async Task Toggle()
@@ -142,6 +178,12 @@ internal class GarageDoor(IStateStore stateStorage, ISchedulerFactory schedulerF
     async Task CompleteGarageDoorActivity()
     {
         await homebridgeEventSender.GarageDoorOpenerStopped(name);
+
+        // Unused. Waiting for classifier model.
+        //if (name.Contains("Driveway"))
+        //{
+        //    await frigateWebhookSender.CreateGarageDoorSnapshot("driveway_cam");
+        //}
     }
 
     public async Task SetToComplete()
@@ -187,6 +229,5 @@ public enum GarageDoorCommand
 {
     OPEN,
     CLOSE,
-    COMPLETE,
-    OPEN_COMPLETE
+    COMPLETE
 }

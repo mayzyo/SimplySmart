@@ -70,6 +70,7 @@ public class LightSwitch : ILightSwitch
     {
         stateMachine.Configure(LightSwitchState.OFF)
             .OnEntryAsync(SendOffEvents)
+            .OnEntry(() => StayOnCount = 0)
             .OnActivateAsync(SendOffEvents)
             .Permit(LightSwitchCommand.TURN_ON, LightSwitchState.ON)
             .Permit(LightSwitchCommand.ENABLE_AUTO, LightSwitchState.AUTO_OFF)
@@ -97,6 +98,14 @@ public class LightSwitch : ILightSwitch
 
         stateMachine.Configure(LightSwitchState.AUTO_ON)
             .SubstateOf(LightSwitchState.ON)
+            .OnEntry(() =>
+            {
+                var count = StayOnCount;
+                if (count < 4)
+                {
+                    StayOnCount = count + 1;
+                }
+            })
             .Permit(LightSwitchCommand.AUTO_OFF, LightSwitchState.AUTO_PENDING_OFF)
             .Permit(LightSwitchCommand.TURN_OFF, LightSwitchState.AUTO_OFF)
             .Permit(LightSwitchCommand.DISABLE_AUTO, LightSwitchState.OFF)
@@ -153,7 +162,6 @@ public class LightSwitch : ILightSwitch
 
     public async Task CompletePendingOff()
     {
-        StayOnCount = 1;
         await stateMachine.FireAsync(LightSwitchCommand.COMPLETE_PENDING);
     }
 
@@ -208,12 +216,6 @@ public class LightSwitch : ILightSwitch
         var jobKey = new JobKey($"{name}_PendingOffJob");
         if (await scheduler.CheckExists(jobKey))
         {
-            var count = StayOnCount;
-            if(count <= 4)
-            {
-                StayOnCount = count + 1;
-            }
-
             await scheduler.DeleteJob(jobKey);
         }
     }

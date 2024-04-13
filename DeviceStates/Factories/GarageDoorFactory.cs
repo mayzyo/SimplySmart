@@ -1,7 +1,9 @@
-﻿using Quartz;
+﻿using Microsoft.Extensions.Logging;
+using Quartz;
 using SimplySmart.Core.Abstractions;
 using SimplySmart.Core.Models;
 using SimplySmart.DeviceStates.Devices;
+using SimplySmart.Frigate.Services;
 using SimplySmart.Homebridge.Services;
 using SimplySmart.Zwave.Services;
 using System;
@@ -15,9 +17,9 @@ public interface IGarageDoorFactory
     IGarageDoor CreateGarageDoor(SmartImplant config);
 }
 
-internal class GarageDoorFactory(IStateStore stateStore, ISchedulerFactory schedulerFactory, IHomebridgeEventSender homebridgeEventSender, IZwaveEventSender zwaveEventSender) : IGarageDoorFactory
+internal class GarageDoorFactory(ILogger<IGarageDoor> logger, IStateStore stateStore, ISchedulerFactory schedulerFactory, IHomebridgeEventSender homebridgeEventSender, IZwaveEventSender zwaveEventSender, IFrigateWebhookSender frigateWebhookSender) : IGarageDoorFactory
 {
     public IGarageDoor CreateGarageDoor(SmartImplant config) => 
-        new GarageDoor(stateStore, schedulerFactory, homebridgeEventSender, zwaveEventSender, config.name)
+        new GarageDoor(logger, stateStore, schedulerFactory, homebridgeEventSender, zwaveEventSender, frigateWebhookSender, config.name)
             .Connect();
 }

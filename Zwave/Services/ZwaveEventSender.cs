@@ -1,5 +1,4 @@
 ﻿using MQTTnet.Extensions.ManagedClient;
-using SimplySmart.Core.Abstractions;
 using SimplySmart.Zwave.Models;
 using System;
 using System.Collections.Generic;
@@ -17,7 +16,7 @@ public interface IZwaveEventSender
     Task MultiLevelSwitchUpdate(string triggerUri, ushort brightness);
 }
 
-internal class ZwaveEventSender(IManagedMqttClient mqttClient, IStateStore stateStorageService) : IZwaveEventSender
+internal class ZwaveEventSender(IManagedMqttClient mqttClient) : IZwaveEventSender
 {
     public async Task BinarySwitchOff(string triggerUri)
     {
@@ -35,8 +34,6 @@ internal class ZwaveEventSender(IManagedMqttClient mqttClient, IStateStore state
 
     public async Task MultiLevelSwitchUpdate(string triggerUri, ushort brightness)
     {
-        stateStorageService.SetExpiringState(triggerUri + "_multilevel", brightness.ToString(), TimeSpan.FromSeconds(5));
-
         var epoch = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var payload = JsonSerializer.Serialize(new MultilevelSwitch { value = (ushort)(brightness == 100 ? 99 : brightness), time = epoch });
         await mqttClient.EnqueueAsync($"zwave/{triggerUri}/targetValue/set", payload);

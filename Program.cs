@@ -17,11 +17,10 @@ using SimplySmart.Core.Models;
 using SimplySmart.Zwave.EventHandling;
 using SimplySmart.Core.Services;
 using SimplySmart.DeviceStates.Factories;
-using SimplySmart.Nodemation.EventHandling;
-using SimplySmart.Nodemation.Services;
 using SimplySmart.HouseStates.Factories;
 using SimplySmart.Core.Abstractions;
 using Quartz;
+using SimplySmart.Frigate.Services;
 
 // Reference: https://code-maze.com/dotnet-factory-pattern-dependency-injection/
 
@@ -77,7 +76,6 @@ Host.CreateDefaultBuilder(args)
         // Zwave Module
         services.AddTransient<IZwaveEventSender, ZwaveEventSender>();
         services.AddTransient<IBinarySwitchEventHandler, BinarySwitchEventHandler>();
-        services.AddTransient<IMultiLevelSwitchEventHandler, MultiLevelSwitchEventHandler>();
         services.AddTransient<ICentralSceneEventHandler, CentralSceneEventHandler>();
         services.AddTransient<INotificationEventHandler, NotificationEventHandler>();
         services.AddScoped<IBinarySwitchService, BinarySwitchService>();
@@ -86,6 +84,7 @@ Host.CreateDefaultBuilder(args)
         // Frigate Module
         services.AddTransient<IFrigateEventHandler, FrigateEventHandler>();
         services.AddTransient<IPersonEventHandler, PersonEventHandler>();
+        services.AddTransient<IFrigateWebhookSender, FrigateWebhookSender>();
 
         // Homebridge Module
         services.AddTransient<IFanEventHandler, FanEventHandler>();
@@ -95,10 +94,6 @@ Host.CreateDefaultBuilder(args)
         services.AddTransient<IHomebridgeEventSender, HomebridgeEventSender>();
         services.AddTransient<ISwitchEventHandler, SwitchEventHandler>();
         services.AddTransient<ISecurityEventHandler, SecurityEventHandler>();
-
-        // Nodemation Module
-        services.AddTransient<INodemationEventSender, NodemationEventSender>();
-        services.AddTransient<IGarageDoorEventHandler, GarageDoorEventHandler>();
     })
     .Build()
     .Run();

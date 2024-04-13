@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using MQTTnet.Client;
-using SimplySmart.Core.Abstractions;
 using SimplySmart.Core.Extensions;
 using SimplySmart.Zwave.Models;
 using SimplySmart.Zwave.Services;
@@ -17,7 +16,9 @@ public interface IMultiLevelSwitchEventHandler
     Task Handle(MqttApplicationMessageReceivedEventArgs e);
 }
 
-internal class MultiLevelSwitchEventHandler(ILogger<MultiLevelSwitchEventHandler> logger, IStateStore stateStorageService, IMultiLevelSwitchService multiLevelSwitchService) : IMultiLevelSwitchEventHandler
+// Unused. The currentValue fluctuates randomly after setting the targetValue too rapidly.
+// This is just too much effort for the time being and our physical switch for the dimmer don't really work anyways.
+internal class MultiLevelSwitchEventHandler(ILogger<MultiLevelSwitchEventHandler> logger, IMultiLevelSwitchService multiLevelSwitchService) : IMultiLevelSwitchEventHandler
 {
     public async Task Handle(MqttApplicationMessageReceivedEventArgs e)
     {
@@ -28,20 +29,6 @@ internal class MultiLevelSwitchEventHandler(ILogger<MultiLevelSwitchEventHandler
             return;
         }
         payload.value = PadValueToHundred(payload.value);
-
-        //var expiryString = stateStorageService.GetState(name + "_multilevel");
-        //if (ushort.TryParse(expiryString, out ushort expiry) && expiry == multiLevelSwitch.value)
-        //{
-        //    return;
-        //}
-
-        //var cooloff = stateStorageService.GetState(name + "_multilevel_cooloff");
-        //if(cooloff != null)
-        //{
-        //    return;
-        //}
-
-        //stateStorageService.SetExpiringState(name + "_multilevel_cooloff", "", TimeSpan.FromSeconds(5));
 
         await (multiLevelSwitchService[name]?.SetLevel(payload.value) ?? Task.CompletedTask);
     }

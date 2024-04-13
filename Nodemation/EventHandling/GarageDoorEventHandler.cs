@@ -1,4 +1,5 @@
-﻿using MQTTnet;
+﻿using Microsoft.Extensions.Logging;
+using MQTTnet;
 using MQTTnet.Client;
 using SimplySmart.DeviceStates.Services;
 using System;
@@ -11,16 +12,38 @@ namespace SimplySmart.Nodemation.EventHandling;
 
 public interface IGarageDoorEventHandler
 {
-    const string MQTT_TOPIC = "nodemation/garageDoor/closed/+";
+    const string MQTT_TOPIC = "nodemation/garageDoor/closed/#";
     Task Handle(MqttApplicationMessageReceivedEventArgs e);
 }
 
-internal class GarageDoorEventHandler(IGarageDoorService garageDoorService) : IGarageDoorEventHandler
+ // Unused. Waiting for classifier model.
+internal class GarageDoorEventHandler(ILogger<IGarageDoorEventHandler> logger, IGarageDoorService garageDoorService) : IGarageDoorEventHandler
 {
     public async Task Handle(MqttApplicationMessageReceivedEventArgs e)
     {
         var name = e.ApplicationMessage.Topic.Replace("nodemation/garageDoor/closed/", "");
         var message = e.ApplicationMessage.ConvertPayloadToString();
-        await (garageDoorService[name]?.StateVerified(message == "true") ?? Task.CompletedTask);
+        if(TryMessageCleanup(message, out bool isClosed))
+        {
+            await (garageDoorService[name]?.StateVerified(isClosed) ?? Task.CompletedTask);
+        }
+    }
+
+    bool TryMessageCleanup(string message, out bool isClosed)
+    {
+        if(message.Contains("true", StringComparison.CurrentCultureIgnoreCase))
+        {
+            isClosed = true;
+            return true;
+        }
+        else if(message.Contains("false", StringComparison.CurrentCultureIgnoreCase))
+        {
+            isClosed = false;
+            return true;
+        }
+
+        logger.LogError($"Message from Open AI didn't contain boolean. {message}");
+        isClosed = default;
+        return false;
     }
 }

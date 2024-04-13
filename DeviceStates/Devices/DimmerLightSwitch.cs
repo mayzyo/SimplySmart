@@ -14,101 +14,73 @@ namespace SimplySmart.DeviceStates.Devices;
 public interface IDimmerLightSwitch : ILightSwitch, IMultiLevelSwitch
 {
     ushort Brightness { get; }
+    Task SetBrightness(ushort brightness);
 }
 
-public class DimmerLightSwitch(
-    IStateStore stateStore,
-    ISchedulerFactory schedulerFactory,
-    IHomebridgeEventSender homebridgeEventSender,
-    IZwaveEventSender zwaveEventSender,
-    string name
-) : LightSwitch(
-    stateStore,
-    schedulerFactory,
-    homebridgeEventSender,
-    zwaveEventSender,
-    name
-), IDimmerLightSwitch
+public class DimmerLightSwitch : LightSwitch, IDimmerLightSwitch
 {
     public ushort Brightness
     {
         get { return brightness; }
     }
 
-    ushort brightness = 0;
-    ushort newBrightness = 0;
+    readonly ushort brightness;
+
+    public DimmerLightSwitch(
+        IStateStore stateStore,
+        ISchedulerFactory schedulerFactory,
+        IHomebridgeEventSender homebridgeEventSender,
+        IZwaveEventSender zwaveEventSender,
+        string name
+    ) : base(
+        stateStore,
+        schedulerFactory,
+        homebridgeEventSender,
+        zwaveEventSender,
+        name
+    )
+    {
+        if (ushort.TryParse(stateStore.GetState(name + "_brightness"), out ushort brightness))
+        {
+            this.brightness = brightness;
+        }
+
+        if (brightness == 0)
+        {
+            stateStore.UpdateState(name, LightSwitchState.OFF.ToString());
+        }
+    }
 
     public new IDimmerLightSwitch Connect()
     {
-        stateMachine.Configure(LightSwitchState.ON)
-            .OnEntry(SetBrightness);
-
-        stateMachine.Configure(LightSwitchState.OFF)
-            .OnEntry(SetBrightness);
-
         base.Connect();
-
         return this;
     }
 
     public async Task SetLevel(ushort level)
     {
-        newBrightness = level;
-        await base.SetToOn(level != 0);
+        await SetBrightness(level);
+        await SetToOn(level != 0);
     }
 
-    public override async Task SetToOn(bool isOn)
+    // This distinctly only set the brightness value and not the on off state.
+    // Homebridge for instance has 2 separate controls for brightness and on off.
+    public async Task SetBrightness(ushort brightness)
     {
-        if(isOn && brightness == 0)
+        // Brightness only affects On state. No need to mess with it when setting to off.
+        if (brightness != 0 && this.brightness != brightness)
         {
-            newBrightness = 100;
+            stateStore.UpdateState(name + "_brightness", brightness.ToString());
+            await zwaveEventSender.MultiLevelSwitchUpdate(name, brightness);
+            await homebridgeEventSender.DimmerBrightness(name, brightness);
         }
-        else
-        {
-            newBrightness = brightness;
-        }
-
-        await base.SetToOn(isOn);
-    }
-
-    public override async Task AutoSetToOn()
-    {
-        if (brightness == 0)
-        {
-            newBrightness = 100;
-        }
-
-        await base.AutoSetToOn();
-    }
-
-    public override async Task AutoSetToOff()
-    {
-        newBrightness = brightness;
-        await base.AutoSetToOff();
-    }
-
-    protected override void ConfigureOnToOnGuardClause()
-    {
-        stateMachine.Configure(LightSwitchState.ON)
-            .PermitReentryIf(LightSwitchCommand.TURN_ON, () => Brightness != newBrightness)
-            .IgnoreIf(LightSwitchCommand.TURN_ON, () => Brightness == newBrightness);
     }
 
     protected override LightSwitchState InitialState()
     {
-        var brightnessString = stateStore.GetState(name + "_brightness") ?? "0";
-        if (ushort.TryParse(brightnessString, out ushort brightness))
-        {
-            this.brightness = brightness;
-        }
-
         var stateString = stateStore.GetState(name);
         if (Enum.TryParse(stateString, out LightSwitchState state))
         {
-            if(this.brightness == 0)
-            {
-                return LightSwitchState.OFF;
-            }
             return state;
         }
 
@@ -117,21 +89,13 @@ public class DimmerLightSwitch(
 
     protected override async Task SendOnEvents()
     {
-        await zwaveEventSender.MultiLevelSwitchUpdate(name, Brightness);
-        await homebridgeEventSender.DimmerBrightness(name, Brightness);
+        await zwaveEventSender.MultiLevelSwitchUpdate(name, brightness);
         await homebridgeEventSender.LightSwitchOn(name);
     }
 
     protected override async Task SendOffEvents()
     {
         await zwaveEventSender.MultiLevelSwitchUpdate(name, 0);
-        await homebridgeEventSender.DimmerBrightness(name, Brightness);
         await homebridgeEventSender.LightSwitchOff(name);
-    }
-
-    void SetBrightness()
-    {
-        brightness = newBrightness;
-        stateStore.UpdateState(name + "_brightness", newBrightness.ToString());
     }
 }
