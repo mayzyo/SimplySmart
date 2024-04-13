@@ -28,16 +28,16 @@ internal class LightSwitchService(IOptions<ApplicationConfig> options, ILogger<I
             {
                 if(lightSwitch.isDimmer == true)
                 {
-                    return lightSwitchFactory.CreateDimmerLightSwitch(lightSwitch, lightSwitch.stayOn);
+                    return lightSwitchFactory.CreateDimmerLightSwitch(lightSwitch);
                 } else
                 {
-                    return lightSwitchFactory.CreateLightSwitch(lightSwitch, lightSwitch.stayOn);
+                    return lightSwitchFactory.CreateLightSwitch(lightSwitch);
                 }
             }
 
             if (TryGetPowerSwitch(key, out Core.Models.PowerSwitch? powerSwitch) && powerSwitch != null)
             {
-                return lightSwitchFactory.CreateLightSwitch(powerSwitch, null);
+                return lightSwitchFactory.CreateLightSwitch(powerSwitch);
             }
 
             logger.LogError($"Light Switch with {key} does not exist");
@@ -51,17 +51,17 @@ internal class LightSwitchService(IOptions<ApplicationConfig> options, ILogger<I
         {
             if (lightSwitch.isDimmer == true)
             {
-                await lightSwitchFactory.CreateDimmerLightSwitch(lightSwitch, lightSwitch.stayOn).Publish();
+                await lightSwitchFactory.CreateDimmerLightSwitch(lightSwitch).Publish();
             }
             else
             {
-                await lightSwitchFactory.CreateLightSwitch(lightSwitch, lightSwitch.stayOn).Publish();
+                await lightSwitchFactory.CreateLightSwitch(lightSwitch).Publish();
             }
         }
 
         foreach (var powerSwitch in GetAllPowerSwitch())
         {
-            await lightSwitchFactory.CreateLightSwitch(powerSwitch, null).Publish();
+            await lightSwitchFactory.CreateLightSwitch(powerSwitch).Publish();
         }
     }
 
@@ -73,11 +73,11 @@ internal class LightSwitchService(IOptions<ApplicationConfig> options, ILogger<I
 
             if (lightSwitchConfig.isDimmer == true)
             {
-                lightSwitch = lightSwitchFactory.CreateDimmerLightSwitch(lightSwitchConfig, lightSwitchConfig.stayOn);
+                lightSwitch = lightSwitchFactory.CreateDimmerLightSwitch(lightSwitchConfig);
             }
             else
             {
-                lightSwitch = lightSwitchFactory.CreateLightSwitch(lightSwitchConfig, lightSwitchConfig.stayOn);
+                lightSwitch = lightSwitchFactory.CreateLightSwitch(lightSwitchConfig);
             }
 
             if(command)
@@ -92,7 +92,7 @@ internal class LightSwitchService(IOptions<ApplicationConfig> options, ILogger<I
 
         foreach (var powerSwitch in GetAllPowerSwitch())
         {
-            var lightSwitch = lightSwitchFactory.CreateLightSwitch(powerSwitch, null);
+            var lightSwitch = lightSwitchFactory.CreateLightSwitch(powerSwitch);
             if (command)
             {
                 lightSwitch.EnableAuto();

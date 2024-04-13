@@ -8,11 +8,11 @@ using System.Threading.Tasks;
 
 namespace SimplySmart.DeviceStates.Jobs;
 
-internal class LightSwitchPendingOffJob(ILightSwitchService lightSwitchService) : IJob
+internal class GarageDoorMovingJob(IGarageDoorService garageDoorService) : IJob
 {
     public async Task Execute(IJobExecutionContext context)
     {
-        var name = context.JobDetail.Key.Name.Replace("_PendingOffJob", "");
-        await (lightSwitchService[name]?.CompletePendingOff() ?? Task.CompletedTask);
+        var name = context.JobDetail.Key.Name.Replace("_MovingJob", "");
+        await (garageDoorService[name]?.SetToComplete() ?? Task.CompletedTask);
     }
 }

@@ -22,28 +22,28 @@ internal class MultiLevelSwitchEventHandler(ILogger<MultiLevelSwitchEventHandler
     public async Task Handle(MqttApplicationMessageReceivedEventArgs e)
     {
         var name = e.ApplicationMessage.Topic.Replace("zwave/", "").Replace("/currentValue", "");
-        if (!e.ApplicationMessage.DeserialiseMessage(out MultilevelSwitch? multiLevelSwitch) || multiLevelSwitch == default)
+        if (!e.ApplicationMessage.DeserialiseMessage(out MultilevelSwitch? payload) || payload == default)
         {
             logger.LogError("message not in JSON format.");
             return;
         }
-        multiLevelSwitch.value = PadValueToHundred(multiLevelSwitch.value);
+        payload.value = PadValueToHundred(payload.value);
 
-        var expiryString = stateStorageService.GetState(name + "_multilevel");
-        if (ushort.TryParse(expiryString, out ushort expiry) && expiry == multiLevelSwitch.value)
-        {
-            return;
-        }
+        //var expiryString = stateStorageService.GetState(name + "_multilevel");
+        //if (ushort.TryParse(expiryString, out ushort expiry) && expiry == multiLevelSwitch.value)
+        //{
+        //    return;
+        //}
 
-        var cooloff = stateStorageService.GetState(name + "_multilevel_cooloff");
-        if(cooloff != null)
-        {
-            return;
-        }
+        //var cooloff = stateStorageService.GetState(name + "_multilevel_cooloff");
+        //if(cooloff != null)
+        //{
+        //    return;
+        //}
 
-        stateStorageService.SetExpiringState(name + "_multilevel_cooloff", "", TimeSpan.FromSeconds(5));
+        //stateStorageService.SetExpiringState(name + "_multilevel_cooloff", "", TimeSpan.FromSeconds(5));
 
-        multiLevelSwitchService[name]?.SetLevel(multiLevelSwitch.value);
+        await (multiLevelSwitchService[name]?.SetLevel(payload.value) ?? Task.CompletedTask);
     }
 
     // Zwave Multilevel Switch only goes up to 99 (0 - 99), we want 100 for compatibility.

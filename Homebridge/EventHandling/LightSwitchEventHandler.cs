@@ -23,6 +23,6 @@ internal class LightSwitchEventHandler(ILightSwitchService lightSwitchService) :
         var message = e.ApplicationMessage.ConvertPayloadToString();
         var isOn = bool.Parse(message);
 
-        lightSwitchService[name]?.SetToOn(isOn);
+        await (lightSwitchService[name]?.SetToOn(isOn) ?? Task.CompletedTask);
     }
 }

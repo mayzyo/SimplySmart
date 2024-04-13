@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using SimplySmart.DeviceStates.Services;
 using SimplySmart.HouseStates.Services;
 using System;
@@ -17,7 +16,7 @@ public interface IStateSyncService
 
 internal class StateSyncService(
     ILogger<IStateSyncService> logger,
-    IHostedService eventBusService,
+    EventBusService eventBusService,
     IFanService fanService,
     ILightSwitchService lightSwitchService,
     IGarageDoorService garageDoorService,
@@ -34,6 +33,6 @@ internal class StateSyncService(
         await houseService.PublishAll();
 
         await Task.Delay(10000);
-        await ((EventBusService)eventBusService).CompleteSyncStateAsync();
+        await eventBusService.CompleteSyncStateAsync();
     }
 }

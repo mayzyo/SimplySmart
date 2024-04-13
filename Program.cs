@@ -48,6 +48,7 @@ Host.CreateDefaultBuilder(args)
             var mqttFactory = new MqttFactory();
             return mqttFactory.CreateManagedMqttClient();
         });
+        services.AddSingleton<EventBusService>();
         services.AddHostedService<EventBusService>();
         services.AddQuartz();
         services.AddQuartzHostedService(opt =>

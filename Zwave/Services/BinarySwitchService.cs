@@ -30,7 +30,7 @@ internal class BinarySwitchService(
         {
             if (TryGetLightSwitch(key, out LightSwitch? lightSwitch) && lightSwitch != null)
             {
-                return lightSwitchFactory.CreateLightSwitch(lightSwitch, lightSwitch.stayOn);
+                return lightSwitchFactory.CreateLightSwitch(lightSwitch);
             }
 
             if (TryGetPowerSwitch(key, out PowerSwitch? powerSwitch) && powerSwitch != null)
@@ -39,7 +39,7 @@ internal class BinarySwitchService(
                 {
                     return fanFactory.CreateFan(powerSwitch);
                 }
-                return lightSwitchFactory.CreateLightSwitch(powerSwitch, null);
+                return lightSwitchFactory.CreateLightSwitch(powerSwitch);
             }
 
             if (TryGetSmartImplant(key, out SmartImplant? smartImplant) && smartImplant != null)

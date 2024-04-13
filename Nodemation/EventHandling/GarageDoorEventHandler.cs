@@ -21,19 +21,6 @@ internal class GarageDoorEventHandler(IGarageDoorService garageDoorService) : IG
     {
         var name = e.ApplicationMessage.Topic.Replace("nodemation/garageDoor/closed/", "");
         var message = e.ApplicationMessage.ConvertPayloadToString();
-        UpdateState(name, message);
-    }
-
-    void UpdateState(string name, string message)
-    {
-        var garageDoor = garageDoorService[name];
-        if(message == "true")
-        {
-            garageDoor.CloseVerified();
-        }
-        else
-        {
-            garageDoor.OpenVerified();
-        }
+        await (garageDoorService[name]?.StateVerified(message == "true") ?? Task.CompletedTask);
     }
 }

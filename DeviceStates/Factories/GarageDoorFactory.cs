@@ -1,4 +1,5 @@
-﻿using SimplySmart.Core.Abstractions;
+﻿using Quartz;
+using SimplySmart.Core.Abstractions;
 using SimplySmart.Core.Models;
 using SimplySmart.DeviceStates.Devices;
 using SimplySmart.Homebridge.Services;
@@ -14,9 +15,9 @@ public interface IGarageDoorFactory
     IGarageDoor CreateGarageDoor(SmartImplant config);
 }
 
-internal class GarageDoorFactory(IStateStore stateStorageService, IHomebridgeEventSender homebridgeEventSender, IZwaveEventSender zwaveEventSender) : IGarageDoorFactory
+internal class GarageDoorFactory(IStateStore stateStore, ISchedulerFactory schedulerFactory, IHomebridgeEventSender homebridgeEventSender, IZwaveEventSender zwaveEventSender) : IGarageDoorFactory
 {
     public IGarageDoor CreateGarageDoor(SmartImplant config) => 
-        new GarageDoor(stateStorageService, config.name, homebridgeEventSender, zwaveEventSender)
+        new GarageDoor(stateStore, schedulerFactory, homebridgeEventSender, zwaveEventSender, config.name)
             .Connect();
 }

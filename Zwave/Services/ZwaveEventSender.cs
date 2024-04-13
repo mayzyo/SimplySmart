@@ -21,8 +21,6 @@ internal class ZwaveEventSender(IManagedMqttClient mqttClient, IStateStore state
 {
     public async Task BinarySwitchOff(string triggerUri)
     {
-        stateStorageService.SetExpiringState(triggerUri + "_binary", false.ToString(), TimeSpan.FromSeconds(2));
-
         var epoch = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var payload = JsonSerializer.Serialize(new BinarySwitch { value = false, time = epoch });
         await mqttClient.EnqueueAsync($"zwave/{triggerUri}/targetValue/set", payload);
@@ -30,8 +28,6 @@ internal class ZwaveEventSender(IManagedMqttClient mqttClient, IStateStore state
 
     public async Task BinarySwitchOn(string triggerUri)
     {
-        stateStorageService.SetExpiringState(triggerUri + "_binary", true.ToString(), TimeSpan.FromSeconds(2));
-
         var epoch = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var payload = JsonSerializer.Serialize(new BinarySwitch { value = true, time = epoch });
         await mqttClient.EnqueueAsync($"zwave/{triggerUri}/targetValue/set", payload);

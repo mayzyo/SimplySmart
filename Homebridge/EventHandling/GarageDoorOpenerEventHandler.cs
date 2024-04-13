@@ -20,17 +20,15 @@ internal class GarageDoorOpenerEventHandler(IGarageDoorService garageDoorService
     {
         var name = e.ApplicationMessage.Topic.Replace("homebridge/garage_door_opener/", "").Replace("/targetDoorState", "");
         var message = e.ApplicationMessage.ConvertPayloadToString();
-        var command = ConvertMessage(message);
-        garageDoorService[name]?.SetToOn(command);
-    }
 
-    public static bool ConvertMessage(string message)
-    {
-        return message switch
+        switch(message)
         {
-            "O" => true,
-            "C" => false,
-            _ => throw new Exception("Undefined value received from homebridge garage door opener"),
-        };
+            case "O":
+                await (garageDoorService[name]?.Open() ?? Task.CompletedTask);
+                return;
+            case "C":
+                await (garageDoorService[name]?.Close() ?? Task.CompletedTask);
+                return;
+        }
     }
 }

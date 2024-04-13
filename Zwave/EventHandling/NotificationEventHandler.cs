@@ -16,7 +16,7 @@ public interface INotificationEventHandler
     Task Handle(MqttApplicationMessageReceivedEventArgs e);
 }
 
-internal class NotificationEventHandler(ILogger logger, IAreaOccupantService areaOccupantService) : INotificationEventHandler
+internal class NotificationEventHandler(ILogger<INotificationEventHandler> logger, IAreaOccupantService areaOccupantService) : INotificationEventHandler
 {
     public async Task Handle(MqttApplicationMessageReceivedEventArgs e)
     {

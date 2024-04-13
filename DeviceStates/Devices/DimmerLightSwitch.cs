@@ -1,4 +1,5 @@
-﻿using SimplySmart.Core.Abstractions;
+﻿using Quartz;
+using SimplySmart.Core.Abstractions;
 using SimplySmart.Homebridge.Services;
 using SimplySmart.Zwave.Abstractions;
 using SimplySmart.Zwave.Services;
@@ -15,7 +16,19 @@ public interface IDimmerLightSwitch : ILightSwitch, IMultiLevelSwitch
     ushort Brightness { get; }
 }
 
-public class DimmerLightSwitch : LightSwitch, IDimmerLightSwitch
+public class DimmerLightSwitch(
+    IStateStore stateStore,
+    ISchedulerFactory schedulerFactory,
+    IHomebridgeEventSender homebridgeEventSender,
+    IZwaveEventSender zwaveEventSender,
+    string name
+) : LightSwitch(
+    stateStore,
+    schedulerFactory,
+    homebridgeEventSender,
+    zwaveEventSender,
+    name
+), IDimmerLightSwitch
 {
     public ushort Brightness
     {
@@ -24,23 +37,6 @@ public class DimmerLightSwitch : LightSwitch, IDimmerLightSwitch
 
     ushort brightness = 0;
     ushort newBrightness = 0;
-
-    public DimmerLightSwitch(
-        IStateStore stateStorage,
-        IHomebridgeEventSender homebridgeEventSender,
-        IZwaveEventSender zwaveEventSender,
-        string name,
-        int? stayOn
-    ) : base(
-        stateStorage,
-        homebridgeEventSender,
-        zwaveEventSender,
-        name,
-        stayOn
-    )
-    {
-
-    }
 
     public new IDimmerLightSwitch Connect()
     {
@@ -100,13 +96,13 @@ public class DimmerLightSwitch : LightSwitch, IDimmerLightSwitch
 
     protected override LightSwitchState InitialState()
     {
-        var brightnessString = stateStorage.GetState(name + "_brightness") ?? "0";
+        var brightnessString = stateStore.GetState(name + "_brightness") ?? "0";
         if (ushort.TryParse(brightnessString, out ushort brightness))
         {
             this.brightness = brightness;
         }
 
-        var stateString = stateStorage.GetState(name);
+        var stateString = stateStore.GetState(name);
         if (Enum.TryParse(stateString, out LightSwitchState state))
         {
             if(this.brightness == 0)
@@ -136,6 +132,6 @@ public class DimmerLightSwitch : LightSwitch, IDimmerLightSwitch
     void SetBrightness()
     {
         brightness = newBrightness;
-        stateStorage.UpdateState(name + "_brightness", newBrightness.ToString());
+        stateStore.UpdateState(name + "_brightness", newBrightness.ToString());
     }
 }
