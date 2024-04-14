@@ -8,7 +8,6 @@ using SimplySmart.Zwave.Services;
 using Stateless;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -19,6 +18,7 @@ public interface ILightSwitch : IBinarySwitch, IAutoSwitch
 {
     LightSwitchState State { get; }
     Task Publish();
+    Task SetToOn(bool isOn);
     Task EnableAuto();
     Task DisableAuto();
     Task CompletePendingOff();
@@ -29,8 +29,7 @@ public class LightSwitch(
     ISchedulerFactory schedulerFactory,
     IHomebridgeEventSender homebridgeEventSender,
     IZwaveEventSender zwaveEventSender,
-    string name,
-    bool isZwave = false
+    string name
 ) : ILightSwitch
 {
     const int STAY_ON_INCREMENT = 60000;
@@ -51,7 +50,6 @@ public class LightSwitch(
             s => stateStore.UpdateState(name, s.ToString())
         );
     public readonly string name = name;
-    protected readonly bool isZwave = isZwave;
     protected readonly IStateStore stateStore = stateStore;
     protected readonly ISchedulerFactory schedulerFactory = schedulerFactory;
     protected readonly IHomebridgeEventSender homebridgeEventSender = homebridgeEventSender;
@@ -73,33 +71,64 @@ public class LightSwitch(
 
     public virtual ILightSwitch Connect()
     {
+        stateMachine.Configure(LightSwitchState.PENDING_OFF)
+            .OnEntryAsync(SendSetToOffEvents)
+            .Permit(LightSwitchCommand.SET_OFF, LightSwitchState.OFF)
+            .Permit(LightSwitchCommand.SET_ON, LightSwitchState.ON)
+            .Ignore(LightSwitchCommand.TURN_OFF)
+            .Ignore(LightSwitchCommand.TURN_ON)
+            .Ignore(LightSwitchCommand.AUTO_OFF)
+            .Ignore(LightSwitchCommand.AUTO_ON);
+
         stateMachine.Configure(LightSwitchState.OFF)
-            .OnEntryAsync(SendOffEvents)
+            .OnEntryAsync(SendCurrentlyOffEvents)
             .OnEntry(() => StayOnCount = 0)
-            .OnActivateAsync(SendOffEvents)
-            .Permit(LightSwitchCommand.TURN_ON, LightSwitchState.ON)
+            .Permit(LightSwitchCommand.SET_ON, LightSwitchState.ON)
+            .Permit(LightSwitchCommand.TURN_ON, LightSwitchState.PENDING_ON)
             .Permit(LightSwitchCommand.ENABLE_AUTO, LightSwitchState.AUTO_OFF)
+            .Ignore(LightSwitchCommand.SET_OFF)
             .Ignore(LightSwitchCommand.TURN_OFF)
             .Ignore(LightSwitchCommand.AUTO_OFF)
             .Ignore(LightSwitchCommand.AUTO_ON)
-            .Ignore(LightSwitchCommand.COMPLETE_PENDING);
+            .Ignore(LightSwitchCommand.COMPLETE_DELAY);
 
-        ConfigureOnToOnGuardClause();
+        stateMachine.Configure(LightSwitchState.PENDING_ON)
+            .OnEntryAsync(SendSetToOnEvents)
+            .Permit(LightSwitchCommand.SET_ON, LightSwitchState.ON)
+            .Permit(LightSwitchCommand.SET_OFF, LightSwitchState.OFF)
+            .Ignore(LightSwitchCommand.TURN_OFF)
+            .Ignore(LightSwitchCommand.TURN_ON)
+            .Ignore(LightSwitchCommand.AUTO_OFF)
+            .Ignore(LightSwitchCommand.AUTO_ON);
+
         stateMachine.Configure(LightSwitchState.ON)
-            .OnEntryAsync(SendOnEvents)
-            .OnActivateAsync(SendOnEvents)
-            .Permit(LightSwitchCommand.TURN_OFF, LightSwitchState.OFF)
+            .OnEntryAsync(SendCurrentlyOnEvents)
+            .Permit(LightSwitchCommand.SET_OFF, LightSwitchState.OFF)
+            .Permit(LightSwitchCommand.TURN_OFF, LightSwitchState.PENDING_OFF)
             .Permit(LightSwitchCommand.ENABLE_AUTO, LightSwitchState.AUTO_FORCED_ON)
+            .Ignore(LightSwitchCommand.SET_ON)
+            .Ignore(LightSwitchCommand.TURN_ON)
             .Ignore(LightSwitchCommand.AUTO_OFF)
             .Ignore(LightSwitchCommand.AUTO_ON)
-            .Ignore(LightSwitchCommand.COMPLETE_PENDING);
+            .Ignore(LightSwitchCommand.COMPLETE_DELAY);
+
+        stateMachine.Configure(LightSwitchState.AUTO_PENDING_OFF)
+            .SubstateOf(LightSwitchState.PENDING_OFF)
+            .Permit(LightSwitchCommand.SET_OFF, LightSwitchState.AUTO_OFF)
+            .Permit(LightSwitchCommand.SET_ON, LightSwitchState.AUTO_ON);
 
         stateMachine.Configure(LightSwitchState.AUTO_OFF)
             .SubstateOf(LightSwitchState.OFF)
-            .Permit(LightSwitchCommand.AUTO_ON, LightSwitchState.AUTO_ON)
-            .Permit(LightSwitchCommand.TURN_ON, LightSwitchState.AUTO_FORCED_ON)
+            .Permit(LightSwitchCommand.AUTO_ON, LightSwitchState.AUTO_PENDING_ON)
+            .Permit(LightSwitchCommand.SET_ON, LightSwitchState.AUTO_ON)
+            .Permit(LightSwitchCommand.TURN_ON, LightSwitchState.AUTO_FORCED_PENDING_ON)
             .Permit(LightSwitchCommand.DISABLE_AUTO, LightSwitchState.OFF)
-            .Ignore(LightSwitchCommand.AUTO_OFF);
+            .Ignore(LightSwitchCommand.ENABLE_AUTO);
+
+        stateMachine.Configure(LightSwitchState.AUTO_PENDING_ON)
+            .SubstateOf(LightSwitchState.PENDING_ON)
+            .Permit(LightSwitchCommand.SET_ON, LightSwitchState.AUTO_ON)
+            .Permit(LightSwitchCommand.SET_OFF, LightSwitchState.AUTO_OFF);
 
         stateMachine.Configure(LightSwitchState.AUTO_ON)
             .SubstateOf(LightSwitchState.ON)
@@ -111,37 +140,48 @@ public class LightSwitch(
                     StayOnCount = count + 1;
                 }
             })
-            .Permit(LightSwitchCommand.AUTO_OFF, LightSwitchState.AUTO_PENDING_OFF)
-            .Permit(LightSwitchCommand.TURN_OFF, LightSwitchState.AUTO_OFF)
-            .Permit(LightSwitchCommand.DISABLE_AUTO, LightSwitchState.OFF)
-            .Ignore(LightSwitchCommand.AUTO_ON)
-            .Ignore(LightSwitchCommand.TURN_ON);
+            .Permit(LightSwitchCommand.AUTO_OFF, LightSwitchState.AUTO_DELAYED_OFF)
+            .Permit(LightSwitchCommand.SET_OFF, LightSwitchState.AUTO_PENDING_OFF)
+            .Permit(LightSwitchCommand.TURN_OFF, LightSwitchState.AUTO_PENDING_OFF)
+            .Permit(LightSwitchCommand.DISABLE_AUTO, LightSwitchState.PENDING_OFF)
+            .Ignore(LightSwitchCommand.ENABLE_AUTO);
 
-        stateMachine.Configure(LightSwitchState.AUTO_PENDING_OFF)
-            .SubstateOf(LightSwitchState.AUTO_ON)
-            .OnEntryAsync(SchedulePendingOffJob)
-            .OnActivateAsync(SchedulePendingOffJob)
-            .OnExitAsync(CancelPendingOffJob)
-            .Permit(LightSwitchCommand.AUTO_ON, LightSwitchState.AUTO_ON)
-            .Permit(LightSwitchCommand.COMPLETE_PENDING, LightSwitchState.AUTO_OFF)
-            .Ignore(LightSwitchCommand.AUTO_OFF);
+        stateMachine.Configure(LightSwitchState.AUTO_FORCED_PENDING_ON)
+            .SubstateOf(LightSwitchState.AUTO_PENDING_ON)
+            .Permit(LightSwitchCommand.SET_ON, LightSwitchState.AUTO_FORCED_ON);
 
         stateMachine.Configure(LightSwitchState.AUTO_FORCED_ON)
             .SubstateOf(LightSwitchState.ON)
-            .Permit(LightSwitchCommand.TURN_OFF, LightSwitchState.AUTO_OFF)
-            .Permit(LightSwitchCommand.DISABLE_AUTO, LightSwitchState.ON);
+            .Permit(LightSwitchCommand.SET_OFF, LightSwitchState.AUTO_OFF)
+            .Permit(LightSwitchCommand.TURN_OFF, LightSwitchState.AUTO_PENDING_OFF)
+            .Permit(LightSwitchCommand.DISABLE_AUTO, LightSwitchState.ON)
+            .Ignore(LightSwitchCommand.ENABLE_AUTO);
+
+        stateMachine.Configure(LightSwitchState.AUTO_DELAYED_OFF)
+            .SubstateOf(LightSwitchState.AUTO_ON)
+            .OnEntryAsync(SchedulePendingOffJob)
+            .OnExitAsync(CancelPendingOffJob)
+            .Permit(LightSwitchCommand.COMPLETE_DELAY, LightSwitchState.AUTO_PENDING_OFF)
+            .Permit(LightSwitchCommand.AUTO_ON, LightSwitchState.AUTO_PENDING_ON)
+            .Ignore(LightSwitchCommand.AUTO_OFF);
 
         return this;
     }
 
     public async Task Publish()
     {
-        await stateMachine.ActivateAsync();
+        //await stateMachine.ActivateAsync();
     }
 
-    public virtual async Task SetToOn(bool isOn)
+    public async Task SetToOn(bool isOn)
     {
         var command = isOn ? LightSwitchCommand.TURN_ON : LightSwitchCommand.TURN_OFF;
+        await stateMachine.FireAsync(command);
+    }
+
+    public virtual async Task SetCurrentValue(bool isOn)
+    {
+        var command = isOn ? LightSwitchCommand.SET_ON : LightSwitchCommand.SET_OFF;
         await stateMachine.FireAsync(command);
     }
 
@@ -167,30 +207,26 @@ public class LightSwitch(
 
     public async Task CompletePendingOff()
     {
-        await stateMachine.FireAsync(LightSwitchCommand.COMPLETE_PENDING);
+        await stateMachine.FireAsync(LightSwitchCommand.COMPLETE_DELAY);
     }
 
-    protected virtual void ConfigureOnToOnGuardClause()
+    protected virtual async Task SendSetToOnEvents()
     {
-        stateMachine.Configure(LightSwitchState.ON)
-            .Ignore(LightSwitchCommand.TURN_ON);
+        await zwaveEventSender.BinarySwitchOn(name);
     }
 
-    protected virtual async Task SendOnEvents()
+    protected virtual async Task SendSetToOffEvents()
     {
-        if(!isZwave)
-        {
-            await zwaveEventSender.BinarySwitchOn(name);
-        }
+        await zwaveEventSender.BinarySwitchOff(name);
+    }
+
+    protected virtual async Task SendCurrentlyOnEvents()
+    {
         await homebridgeEventSender.LightSwitchOn(name);
     }
 
-    protected virtual async Task SendOffEvents()
+    protected virtual async Task SendCurrentlyOffEvents()
     {
-        if(!isZwave)
-        {
-            await zwaveEventSender.BinarySwitchOff(name);
-        }
         await homebridgeEventSender.LightSwitchOff(name);
     }
 
@@ -225,10 +261,15 @@ public enum LightSwitchState
 {
     ON,
     OFF,
+    PENDING_ON,
+    PENDING_OFF,
     AUTO_FORCED_ON,
     AUTO_ON,
     AUTO_OFF,
-    AUTO_PENDING_OFF
+    AUTO_PENDING_ON,
+    AUTO_PENDING_OFF,
+    AUTO_FORCED_PENDING_ON,
+    AUTO_DELAYED_OFF
 }
 
 public enum LightSwitchCommand
@@ -237,7 +278,9 @@ public enum LightSwitchCommand
     TURN_OFF,
     AUTO_ON,
     AUTO_OFF,
-    COMPLETE_PENDING,
+    SET_ON,
+    SET_OFF,
+    COMPLETE_DELAY,
     ENABLE_AUTO,
     DISABLE_AUTO
 }

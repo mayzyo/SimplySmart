@@ -1,5 +1,6 @@
 ﻿using SimplySmart.Core.Abstractions;
 using SimplySmart.DeviceStates.Services;
+using SimplySmart.Homebridge.Abstractions;
 using SimplySmart.Homebridge.Services;
 using Stateless;
 using System;
@@ -10,12 +11,11 @@ using System.Threading.Tasks;
 
 namespace SimplySmart.HouseStates.Features;
 
-public interface IAutoLight
+public interface IAutoLight : ISwitch
 {
     AutoLightState State { get; }
     IAutoLight Connect();
     Task Publish();
-    Task Trigger(AutoLightCommand command);
 }
 
 internal class AutoLight(IStateStore stateStorageService, IHomebridgeEventSender homebridgeEventSender, ILightSwitchService lightSwitchService) : IAutoLight
@@ -24,7 +24,7 @@ internal class AutoLight(IStateStore stateStorageService, IHomebridgeEventSender
     public readonly StateMachine<AutoLightState, AutoLightCommand> stateMachine = new(
         () =>
         {
-            var stateString = stateStorageService.GetState("auto_light");
+            var stateString = stateStorageService.GetState("auto_light/Office/0/0");
             if (Enum.TryParse(stateString, out AutoLightState state))
             {
                 return state;
@@ -32,7 +32,7 @@ internal class AutoLight(IStateStore stateStorageService, IHomebridgeEventSender
 
             return AutoLightState.OFF;
         },
-        s => stateStorageService.UpdateState("auto_light", s.ToString())
+        s => stateStorageService.UpdateState("auto_light/Office/0/0", s.ToString())
     );
 
     public IAutoLight Connect()
@@ -57,21 +57,22 @@ internal class AutoLight(IStateStore stateStorageService, IHomebridgeEventSender
         await stateMachine.ActivateAsync();
     }
 
-    public async Task Trigger(AutoLightCommand command)
+    public async Task SetToOn(bool isOn)
     {
+        var command = isOn ? AutoLightCommand.ON : AutoLightCommand.OFF;
         await stateMachine.FireAsync(command);
     }
 
     private async Task DisableAuto()
     {
         lightSwitchService.SetAllToAuto(false);
-        await homebridgeEventSender.SwitchOff("auto_light");
+        await homebridgeEventSender.SwitchOff("auto_light/Office/0/0");
     }
 
     private async Task EnableAuto()
     {
         lightSwitchService.SetAllToAuto(true);
-        await homebridgeEventSender.SwitchOn("auto_light");
+        await homebridgeEventSender.SwitchOn("auto_light/Office/0/0");
     }
 }
 

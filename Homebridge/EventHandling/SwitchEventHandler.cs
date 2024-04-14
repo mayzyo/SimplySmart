@@ -1,8 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
-using MQTTnet;
+﻿using MQTTnet;
 using MQTTnet.Client;
-using SimplySmart.HouseStates.Features;
-using SimplySmart.HouseStates.Services;
+using SimplySmart.Homebridge.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,22 +11,17 @@ namespace SimplySmart.Homebridge.EventHandling;
 
 public interface ISwitchEventHandler
 {
-    const string MQTT_TOPIC = "homebridge/switch/+/setOn";
+    const string MQTT_TOPIC = "homebridge/switch/+/+/+/+/setOn";
     Task Handle(MqttApplicationMessageReceivedEventArgs e);
 }
 
-internal class SwitchEventHandler(ILogger<ISwitchEventHandler> logger, IHouseService houseService) : ISwitchEventHandler
+internal class SwitchEventHandler(ISwitchService switchService) : ISwitchEventHandler
 {
     public async Task Handle(MqttApplicationMessageReceivedEventArgs e)
     {
         var name = e.ApplicationMessage.Topic.Replace("homebridge/switch/", "").Replace("/setOn", "");
         var message = e.ApplicationMessage.ConvertPayloadToString();
 
-        if (name == "auto_light")
-        {
-            logger.LogInformation("auto light triggered");
-            var isOn = bool.Parse(message);
-            await houseService.AutoLight.Trigger(isOn ? AutoLightCommand.ON : AutoLightCommand.OFF);
-        }
+        await (switchService[name]?.SetToOn(message == "true") ?? Task.CompletedTask);
     }
 }

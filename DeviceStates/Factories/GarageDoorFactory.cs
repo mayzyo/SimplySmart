@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 namespace SimplySmart.DeviceStates.Factories;
 public interface IGarageDoorFactory
 {
-    IGarageDoor CreateGarageDoor(SmartImplant config, bool isZwave = false);
+    IGarageDoor CreateGarageDoor(SmartImplant config);
 }
 
 internal class GarageDoorFactory(
@@ -26,7 +26,7 @@ internal class GarageDoorFactory(
     IFrigateWebhookSender frigateWebhookSender
 ) : IGarageDoorFactory
 {
-    public IGarageDoor CreateGarageDoor(SmartImplant config, bool isZwave = false) => 
-        new GarageDoor(logger, stateStore, schedulerFactory, homebridgeEventSender, zwaveEventSender, frigateWebhookSender, config.name, isZwave)
+    public IGarageDoor CreateGarageDoor(SmartImplant config) => 
+        new GarageDoor(logger, stateStore, schedulerFactory, homebridgeEventSender, zwaveEventSender, frigateWebhookSender, config.name)
             .Connect();
 }

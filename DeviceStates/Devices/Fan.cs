@@ -15,21 +15,21 @@ public interface IFan : IAppliance, IBinarySwitch
     ApplianceState State { get; }
     IFan Connect();
     Task Publish();
+    Task SetToOn(bool isOn);
 }
 
 internal class Fan(
-    IStateStore stateStorage,
+    IStateStore stateStore,
     IHomebridgeEventSender homebridgeEventSender,
     IZwaveEventSender zwaveEventSender,
-    string name,
-    bool isZwave = false
+    string name
 ) : IFan
 {
     public ApplianceState State { get { return stateMachine.State; } }
     public readonly StateMachine<ApplianceState, ApplianceCommand> stateMachine = new(
         () =>
         {
-            var state = stateStorage.GetState(name);
+            var state = stateStore.GetState(name);
             if (Enum.TryParse(state, out ApplianceState myStatus))
             {
                 return myStatus;
@@ -37,53 +37,74 @@ internal class Fan(
 
             return ApplianceState.OFF;
         },
-        s => stateStorage.UpdateState(name, s.ToString())
+        s => stateStore.UpdateState(name, s.ToString())
     );
-    public readonly string name = name;
 
     public IFan Connect()
     {
+        stateMachine.Configure(ApplianceState.PENDING_OFF)
+            .OnEntryAsync(SendSetToOffEvents)
+            .Permit(ApplianceCommand.SET_OFF, ApplianceState.OFF)
+            .Permit(ApplianceCommand.SET_ON, ApplianceState.ON)
+            .Ignore(ApplianceCommand.TURN_OFF);
+
         stateMachine.Configure(ApplianceState.OFF)
-            .OnEntryAsync(SetToOff)
-            .OnActivateAsync(SetToOff)
-            .Permit(ApplianceCommand.ON, ApplianceState.ON)
-            .Ignore(ApplianceCommand.OFF);
+            .OnEntryAsync(SendCurrentlyOffEvents)
+            .Permit(ApplianceCommand.TURN_ON, ApplianceState.PENDING_ON)
+            .Permit(ApplianceCommand.SET_ON, ApplianceState.ON)
+            .Ignore(ApplianceCommand.SET_OFF)
+            .Ignore(ApplianceCommand.TURN_OFF);
+
+        stateMachine.Configure(ApplianceState.PENDING_ON)
+            .OnEntryAsync(SendSetToOnEvents)
+            .Permit(ApplianceCommand.SET_ON, ApplianceState.ON)
+            .Permit(ApplianceCommand.SET_OFF, ApplianceState.OFF)
+            .Ignore(ApplianceCommand.TURN_ON);
 
         stateMachine.Configure(ApplianceState.ON)
-            .OnEntryAsync(SetToOn)
-            .OnActivateAsync(SetToOn)
-            .Permit(ApplianceCommand.OFF, ApplianceState.OFF)
-            .Ignore(ApplianceCommand.ON);
+            .OnEntryAsync(SendCurrentlyOnEvents)
+            .Permit(ApplianceCommand.TURN_OFF, ApplianceState.PENDING_OFF)
+            .Permit(ApplianceCommand.SET_OFF, ApplianceState.OFF)
+            .Ignore(ApplianceCommand.SET_ON)
+            .Ignore(ApplianceCommand.TURN_ON);
 
         return this;
     }
 
     public async Task Publish()
     {
-        await stateMachine.ActivateAsync();
+        //await stateMachine.ActivateAsync();
     }
 
     public async Task SetToOn(bool isOn)
     {
-        var command = isOn ? ApplianceCommand.ON : ApplianceCommand.OFF;
+        var command = isOn ? ApplianceCommand.TURN_ON : ApplianceCommand.TURN_OFF;
         await stateMachine.FireAsync(command);
     }
 
-    async Task SetToOn()
+    public async Task SetCurrentValue(bool isOn)
     {
-        await homebridgeEventSender.FanOn(name);
-        if(!isZwave)
-        {
-            await zwaveEventSender.BinarySwitchOn(name);
-        }
+        var command = isOn ? ApplianceCommand.SET_ON : ApplianceCommand.SET_OFF;
+        await stateMachine.FireAsync(command);
     }
 
-    async Task SetToOff()
+    async Task SendSetToOnEvents()
+    {
+        await zwaveEventSender.BinarySwitchOn(name);
+    }
+
+    async Task SendSetToOffEvents()
+    {   
+        await zwaveEventSender.BinarySwitchOff(name);
+    }
+
+    async Task SendCurrentlyOnEvents()
+    {
+        await homebridgeEventSender.FanOn(name);
+    }
+
+    async Task SendCurrentlyOffEvents()
     {
         await homebridgeEventSender.FanOff(name);
-        if(!isZwave)
-        {
-            await zwaveEventSender.BinarySwitchOff(name);
-        }
     }
 }

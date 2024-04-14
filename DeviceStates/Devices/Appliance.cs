@@ -14,11 +14,15 @@ public interface IAppliance
 public enum ApplianceState
 {
     ON,
-    OFF
+    OFF,
+    PENDING_ON,
+    PENDING_OFF
 }
 
 public enum ApplianceCommand
 {
-    ON,
-    OFF
+    TURN_ON,
+    TURN_OFF,
+    SET_ON,
+    SET_OFF
 }

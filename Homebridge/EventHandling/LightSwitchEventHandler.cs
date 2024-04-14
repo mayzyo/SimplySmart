@@ -11,7 +11,7 @@ namespace SimplySmart.Homebridge.EventHandling;
 
 public interface ILightSwitchEventHandler
 {
-    const string MQTT_TOPIC = "homebridge/light_switch/+/+/+/+";
+    const string MQTT_TOPIC = "homebridge/light_switch/+/+/+/+/setOn";
     Task Handle(MqttApplicationMessageReceivedEventArgs e);
 }
 
@@ -19,7 +19,7 @@ internal class LightSwitchEventHandler(ILightSwitchService lightSwitchService) :
 {
     public async Task Handle(MqttApplicationMessageReceivedEventArgs e)
     {
-        var name = e.ApplicationMessage.Topic.Replace("homebridge/light_switch/", "");
+        var name = e.ApplicationMessage.Topic.Replace("homebridge/light_switch/", "").Replace("/setOn", "");
         var message = e.ApplicationMessage.ConvertPayloadToString();
         var isOn = bool.Parse(message);
 

@@ -97,6 +97,7 @@ public class EventBusService(ILogger<EventBusService> logger, IServiceProvider s
             new MqttTopicFilterBuilder().WithTopic(ISecurityEventHandler.MQTT_TOPIC).Build(),
 
             new MqttTopicFilterBuilder().WithTopic(IBinarySwitchEventHandler.MQTT_TOPIC).Build(),
+            new MqttTopicFilterBuilder().WithTopic(IMultiLevelSwitchEventHandler.MQTT_TOPIC).Build(),
             new MqttTopicFilterBuilder().WithTopic(ICentralSceneEventHandler.MQTT_TOPIC).Build(),
             new MqttTopicFilterBuilder().WithTopic(INotificationEventHandler.MQTT_TOPIC).Build(),
         ];
@@ -160,6 +161,11 @@ public class EventBusService(ILogger<EventBusService> logger, IServiceProvider s
         else if (MqttTopicFilterComparer.Compare(topic, IBinarySwitchEventHandler.MQTT_TOPIC) == MqttTopicFilterCompareResult.IsMatch)
         {
             var handler = scope.ServiceProvider.GetRequiredService<IBinarySwitchEventHandler>();
+            await handler.Handle(e);
+        }
+        else if (MqttTopicFilterComparer.Compare(topic, IMultiLevelSwitchEventHandler.MQTT_TOPIC) == MqttTopicFilterCompareResult.IsMatch)
+        {
+            var handler = scope.ServiceProvider.GetRequiredService<IMultiLevelSwitchEventHandler>();
             await handler.Handle(e);
         }
         else if (MqttTopicFilterComparer.Compare(topic, ICentralSceneEventHandler.MQTT_TOPIC) == MqttTopicFilterCompareResult.IsMatch)

@@ -30,7 +30,7 @@ internal class BinarySwitchService(
         {
             if (TryGetLightSwitch(key, out LightSwitch? lightSwitch) && lightSwitch != null)
             {
-                return lightSwitchFactory.CreateLightSwitch(lightSwitch, true);
+                return lightSwitchFactory.CreateLightSwitch(lightSwitch);
             }
 
             if (TryGetPowerSwitch(key, out PowerSwitch? powerSwitch) && powerSwitch != null)
@@ -39,14 +39,14 @@ internal class BinarySwitchService(
                 {
                     return fanFactory.CreateFan(powerSwitch);
                 }
-                return lightSwitchFactory.CreateLightSwitch(powerSwitch, true);
+                return lightSwitchFactory.CreateLightSwitch(powerSwitch);
             }
 
             if (TryGetSmartImplant(key, out SmartImplant? smartImplant) && smartImplant != null)
             {
                 if (smartImplant.type == "garageDoor")
                 {
-                    return garageDoorFactory.CreateGarageDoor(smartImplant, true);
+                    return garageDoorFactory.CreateGarageDoor(smartImplant);
                 }
             }
 

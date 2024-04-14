@@ -56,7 +56,7 @@ public class AutoLightTests
         mockState = AutoLightState.OFF.ToString();
 
         // Act
-        await autoLight.Trigger(AutoLightCommand.ON);
+        await autoLight.SetToOn(AutoLightCommand.ON);
 
         // Assert
         Assert.Equal(AutoLightState.ON, autoLight.State);
@@ -71,7 +71,7 @@ public class AutoLightTests
         mockState = AutoLightState.ON.ToString();
 
         // Act
-        await autoLight.Trigger(AutoLightCommand.ON);
+        await autoLight.SetToOn(AutoLightCommand.ON);
 
         // Assert
         Assert.Equal(AutoLightState.ON, autoLight.State);
@@ -86,7 +86,7 @@ public class AutoLightTests
         mockState = AutoLightState.ON.ToString();
 
         // Act
-        await autoLight.Trigger(AutoLightCommand.OFF);
+        await autoLight.SetToOn(AutoLightCommand.OFF);
 
         // Assert
         Assert.Equal(AutoLightState.OFF, autoLight.State);
@@ -101,7 +101,7 @@ public class AutoLightTests
         mockState = AutoLightState.OFF.ToString();
 
         // Act
-        await autoLight.Trigger(AutoLightCommand.OFF);
+        await autoLight.SetToOn(AutoLightCommand.OFF);
 
         // Assert
         Assert.Equal(AutoLightState.OFF, autoLight.State);

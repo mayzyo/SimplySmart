@@ -76,6 +76,7 @@ Host.CreateDefaultBuilder(args)
         // Zwave Module
         services.AddTransient<IZwaveEventSender, ZwaveEventSender>();
         services.AddTransient<IBinarySwitchEventHandler, BinarySwitchEventHandler>();
+        services.AddTransient<IMultiLevelSwitchEventHandler, MultiLevelSwitchEventHandler>();
         services.AddTransient<ICentralSceneEventHandler, CentralSceneEventHandler>();
         services.AddTransient<INotificationEventHandler, NotificationEventHandler>();
         services.AddScoped<IBinarySwitchService, BinarySwitchService>();
@@ -84,6 +85,7 @@ Host.CreateDefaultBuilder(args)
         // Frigate Module
         services.AddTransient<IFrigateEventHandler, FrigateEventHandler>();
         services.AddTransient<IPersonEventHandler, PersonEventHandler>();
+        services.AddTransient<IPassthroughEventSender, PassthroughEventSender>();
         services.AddTransient<IFrigateWebhookSender, FrigateWebhookSender>();
 
         // Homebridge Module
@@ -94,6 +96,7 @@ Host.CreateDefaultBuilder(args)
         services.AddTransient<IHomebridgeEventSender, HomebridgeEventSender>();
         services.AddTransient<ISwitchEventHandler, SwitchEventHandler>();
         services.AddTransient<ISecurityEventHandler, SecurityEventHandler>();
+        services.AddScoped<ISwitchService, SwitchService>();
     })
     .Build()
     .Run();

@@ -8,5 +8,5 @@ namespace SimplySmart.Zwave.Abstractions;
 
 public interface IMultiLevelSwitch
 {
-    Task SetLevel(ushort level);
+    Task SetCurrentLevel(ushort level);
 }

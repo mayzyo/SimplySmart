@@ -29,47 +29,47 @@ internal class HomebridgeEventSender(IManagedMqttClient mqttClient) : IHomebridg
 {
     public async Task FanOn(string triggerUri)
     {
-        await mqttClient.EnqueueAsync($"homebridge/fan/{triggerUri}/on", "true");
+        await mqttClient.EnqueueAsync($"homebridge/fan/{triggerUri}/getOn", "true");
     }
 
     public async Task FanOff(string triggerUri)
     {
-        await mqttClient.EnqueueAsync($"homebridge/fan/{triggerUri}/on", "false");
+        await mqttClient.EnqueueAsync($"homebridge/fan/{triggerUri}/getOn", "false");
     }
 
     public async Task GarageDoorOpenerOn(string triggerUri)
     {
-        await mqttClient.EnqueueAsync($"homebridge/garage_door_opener/{triggerUri}/targetDoorState", "O");
+        await mqttClient.EnqueueAsync($"homebridge/garage_door_opener/{triggerUri}/getTargetDoorState", "O");
     }
 
     public async Task GarageDoorOpenerOff(string triggerUri)
     {
-        await mqttClient.EnqueueAsync($"homebridge/garage_door_opener/{triggerUri}/targetDoorState", "C");
+        await mqttClient.EnqueueAsync($"homebridge/garage_door_opener/{triggerUri}/getTargetDoorState", "C");
     }
 
     public async Task GarageDoorOpenerMoving(string triggerUri)
     {
-        await mqttClient.EnqueueAsync($"homebridge/garage_door_opener/{triggerUri}/doorMoving", "true");
+        await mqttClient.EnqueueAsync($"homebridge/garage_door_opener/{triggerUri}/getDoorMoving", "true");
     }
 
     public async Task GarageDoorOpenerStopped(string triggerUri)
     {
-        await mqttClient.EnqueueAsync($"homebridge/garage_door_opener/{triggerUri}/doorMoving", "false");
+        await mqttClient.EnqueueAsync($"homebridge/garage_door_opener/{triggerUri}/getDoorMoving", "false");
     }
 
     public async Task LightSwitchOn(string triggerUri)
     {
-        await mqttClient.EnqueueAsync($"homebridge/light_switch/{triggerUri}", "true");
+        await mqttClient.EnqueueAsync($"homebridge/light_switch/{triggerUri}/getOn", "true");
     }
 
     public async Task LightSwitchOff(string triggerUri)
     {
-        await mqttClient.EnqueueAsync($"homebridge/light_switch/{triggerUri}", "false");
+        await mqttClient.EnqueueAsync($"homebridge/light_switch/{triggerUri}/getOn", "false");
     }
 
     public async Task DimmerBrightness(string triggerUri, ushort brightness)
     {
-        await mqttClient.EnqueueAsync($"homebridge/light_switch/{triggerUri}/brightness", brightness.ToString());
+        await mqttClient.EnqueueAsync($"homebridge/light_switch/{triggerUri}/getBrightness", brightness.ToString());
     }
 
     public async Task SwitchOn(string triggerUri)

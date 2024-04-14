@@ -37,7 +37,7 @@ public class DimmerLightSwitchEventHandlerTests
         await eventHandler.Handle(eventArgs);
 
         // Assert
-        dimmerSwitchMock.Verify(x => x.SetLevel((ushort)brightness), Times.Once);
+        dimmerSwitchMock.Verify(x => x.SetCurrentLevel((ushort)brightness), Times.Once);
     }
 
     [Fact]
@@ -54,7 +54,7 @@ public class DimmerLightSwitchEventHandlerTests
         await eventHandler.Handle(eventArgs);
 
         // Assert
-        dimmerSwitchMock.Verify(x => x.SetToOn(isOn), Times.Once);
+        dimmerSwitchMock.Verify(x => x.SetCurrentValue(isOn), Times.Once);
     }
 
     [Fact]

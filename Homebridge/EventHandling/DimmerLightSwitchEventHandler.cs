@@ -12,7 +12,7 @@ namespace SimplySmart.Homebridge.EventHandling;
 
 public interface IDimmerLightSwitchEventHandler
 {
-    const string MQTT_TOPIC = "homebridge/light_switch/+/+/+/+/brightness";
+    const string MQTT_TOPIC = "homebridge/light_switch/+/+/+/+/setBrightness";
     Task Handle(MqttApplicationMessageReceivedEventArgs e);
 }
 
@@ -20,7 +20,7 @@ internal class DimmerLightSwitchEventHandler(ILightSwitchService lightSwitchServ
 {
     public async Task Handle(MqttApplicationMessageReceivedEventArgs e)
     {
-        var name = e.ApplicationMessage.Topic.Replace("homebridge/light_switch/", "").Replace("/brightness", "");
+        var name = e.ApplicationMessage.Topic.Replace("homebridge/light_switch/", "").Replace("/setBrightness", "");
         var message = e.ApplicationMessage.ConvertPayloadToString();
         var brightness = ushort.Parse(message);
         var dimmerSwitch = lightSwitchService[name];

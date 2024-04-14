@@ -24,22 +24,20 @@ public class DimmerLightSwitch : LightSwitch, IDimmerLightSwitch
         get { return brightness; }
     }
 
-    readonly ushort brightness;
+    ushort brightness;
 
     public DimmerLightSwitch(
         IStateStore stateStore,
         ISchedulerFactory schedulerFactory,
         IHomebridgeEventSender homebridgeEventSender,
         IZwaveEventSender zwaveEventSender,
-        string name,
-        bool isZwave = false
+        string name
     ) : base(
         stateStore,
         schedulerFactory,
         homebridgeEventSender,
         zwaveEventSender,
-        name,
-        isZwave
+        name
     )
     {
         if (ushort.TryParse(stateStore.GetState(name + "_brightness"), out ushort brightness))
@@ -59,10 +57,14 @@ public class DimmerLightSwitch : LightSwitch, IDimmerLightSwitch
         return this;
     }
 
-    public async Task SetLevel(ushort level)
+    public async Task SetCurrentLevel(ushort level)
     {
-        await SetBrightness(level);
-        await SetToOn(level != 0);
+        await SetCurrentValue(level != 0);
+
+        if (brightness == level)
+        {
+            await SendBrightnessEvents();
+        }
     }
 
     // This distinctly only set the brightness value and not the on off state.
@@ -72,27 +74,39 @@ public class DimmerLightSwitch : LightSwitch, IDimmerLightSwitch
         // Brightness only affects On state. No need to mess with it when setting to off.
         if (brightness != 0 && this.brightness != brightness)
         {
+            this.brightness = brightness;
             stateStore.UpdateState(name + "_brightness", brightness.ToString());
-            await zwaveEventSender.MultiLevelSwitchUpdate(name, brightness);
-            await homebridgeEventSender.DimmerBrightness(name, brightness);
+            await SendSetLevelEvents();
         }
     }
 
-    protected override async Task SendOnEvents()
+    protected override async Task SendSetToOnEvents()
     {
-        if(!isZwave)
-        {
-            await zwaveEventSender.MultiLevelSwitchUpdate(name, brightness);
-        }
+        await zwaveEventSender.MultiLevelSwitchUpdate(name, brightness);
+    }
+
+    protected override async Task SendSetToOffEvents()
+    {
+        await zwaveEventSender.MultiLevelSwitchUpdate(name, 0);
+    }
+
+    protected override async Task SendCurrentlyOnEvents()
+    {
         await homebridgeEventSender.LightSwitchOn(name);
     }
 
-    protected override async Task SendOffEvents()
+    protected override async Task SendCurrentlyOffEvents()
     {
-        if(!isZwave)
-        {
-            await zwaveEventSender.MultiLevelSwitchUpdate(name, 0);
-        }
         await homebridgeEventSender.LightSwitchOff(name);
+    }
+
+    async Task SendSetLevelEvents()
+    {
+        await zwaveEventSender.MultiLevelSwitchUpdate(name, brightness);
+    }
+
+    async Task SendBrightnessEvents()
+    {
+        await homebridgeEventSender.DimmerBrightness(name, brightness);
     }
 }

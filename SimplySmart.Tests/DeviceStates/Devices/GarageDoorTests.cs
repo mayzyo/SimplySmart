@@ -52,7 +52,7 @@ public class GarageDoorTests
         mockState = GarageDoorState.CLOSED.ToString();
 
         // Act
-        await garageDoor.SetToOn(true);
+        await garageDoor.SetCurrentValue(true);
 
         // Assert
         Assert.Equal(GarageDoorState.OPENING, garageDoor.State);
@@ -67,7 +67,7 @@ public class GarageDoorTests
         mockState = GarageDoorState.OPENING.ToString();
 
         // Act
-        await garageDoor.SetToOn(true);
+        await garageDoor.SetCurrentValue(true);
 
         // Assert
         Assert.Equal(GarageDoorState.OPENING, garageDoor.State);
@@ -82,7 +82,7 @@ public class GarageDoorTests
         mockState = GarageDoorState.CLOSING.ToString();
 
         // Act
-        await garageDoor.SetToOn(false);
+        await garageDoor.SetCurrentValue(false);
 
         // Assert
         Assert.Equal(GarageDoorState.CLOSING, garageDoor.State);
@@ -97,7 +97,7 @@ public class GarageDoorTests
         mockState = GarageDoorState.OPENED.ToString();
 
         // Act
-        await garageDoor.SetToOn(true);
+        await garageDoor.SetCurrentValue(true);
 
         // Assert
         Assert.Equal(GarageDoorState.OPENED, garageDoor.State);
@@ -112,7 +112,7 @@ public class GarageDoorTests
         mockState = GarageDoorState.CLOSED.ToString();
 
         // Act
-        await garageDoor.SetToOn(false);
+        await garageDoor.SetCurrentValue(false);
 
         // Assert
         Assert.Equal(GarageDoorState.CLOSED, garageDoor.State);

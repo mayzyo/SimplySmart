@@ -30,7 +30,7 @@ internal class MultiLevelSwitchEventHandler(ILogger<MultiLevelSwitchEventHandler
         }
         payload.value = PadValueToHundred(payload.value);
 
-        await (multiLevelSwitchService[name]?.SetLevel(payload.value) ?? Task.CompletedTask);
+        await (multiLevelSwitchService[name]?.SetCurrentLevel(payload.value) ?? Task.CompletedTask);
     }
 
     // Zwave Multilevel Switch only goes up to 99 (0 - 99), we want 100 for compatibility.

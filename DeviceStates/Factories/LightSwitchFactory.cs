@@ -14,9 +14,9 @@ namespace SimplySmart.DeviceStates.Factories;
 
 public interface ILightSwitchFactory
 {
-    ILightSwitch CreateLightSwitch(Core.Models.LightSwitch lightSwitch, bool isZwave = false);
-    ILightSwitch CreateLightSwitch(PowerSwitch powerSwitch, bool isZwave = false);
-    IDimmerLightSwitch CreateDimmerLightSwitch(Core.Models.LightSwitch lightSwitch, bool isZwave = false);
+    ILightSwitch CreateLightSwitch(Core.Models.LightSwitch lightSwitch);
+    ILightSwitch CreateLightSwitch(PowerSwitch powerSwitch);
+    IDimmerLightSwitch CreateDimmerLightSwitch(Core.Models.LightSwitch lightSwitch);
 }
 
 internal class LightSwitchFactory(
@@ -26,15 +26,15 @@ internal class LightSwitchFactory(
     IZwaveEventSender zwaveEventSender
 ) : ILightSwitchFactory
 {
-    public ILightSwitch CreateLightSwitch(Core.Models.LightSwitch lightSwitch, bool isZwave = false) =>
-        new Devices.LightSwitch(stateStore, schedulerFactory, homebridgeEventSender, zwaveEventSender, lightSwitch.name, isZwave)
+    public ILightSwitch CreateLightSwitch(Core.Models.LightSwitch lightSwitch) =>
+        new Devices.LightSwitch(stateStore, schedulerFactory, homebridgeEventSender, zwaveEventSender, lightSwitch.name)
             .Connect();
 
-    public ILightSwitch CreateLightSwitch(PowerSwitch powerSwitch, bool isZwave = false) =>
-        new Devices.LightSwitch(stateStore, schedulerFactory, homebridgeEventSender, zwaveEventSender, powerSwitch.name, isZwave)
+    public ILightSwitch CreateLightSwitch(PowerSwitch powerSwitch) =>
+        new Devices.LightSwitch(stateStore, schedulerFactory, homebridgeEventSender, zwaveEventSender, powerSwitch.name)
             .Connect();
 
-    public IDimmerLightSwitch CreateDimmerLightSwitch(Core.Models.LightSwitch lightSwitch, bool isZwave = false) =>
-        new DimmerLightSwitch(stateStore, schedulerFactory, homebridgeEventSender, zwaveEventSender, lightSwitch.name, isZwave)
+    public IDimmerLightSwitch CreateDimmerLightSwitch(Core.Models.LightSwitch lightSwitch) =>
+        new DimmerLightSwitch(stateStore, schedulerFactory, homebridgeEventSender, zwaveEventSender, lightSwitch.name)
             .Connect();
 }

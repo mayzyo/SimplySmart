@@ -35,7 +35,7 @@ public class GarageDoorOpenerEventHandlerTests
         await eventHandler.Handle(eventArgs);
 
         // Assert
-        garageDoorMock.Verify(x => x.SetToOn(true), Times.Once);
+        garageDoorMock.Verify(x => x.SetCurrentValue(true), Times.Once);
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public class GarageDoorOpenerEventHandlerTests
         await eventHandler.Handle(eventArgs);
 
         // Assert
-        garageDoorMock.Verify(x => x.SetToOn(false), Times.Once);
+        garageDoorMock.Verify(x => x.SetCurrentValue(false), Times.Once);
     }
 
     [Fact]

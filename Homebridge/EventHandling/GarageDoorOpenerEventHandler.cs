@@ -10,7 +10,7 @@ namespace SimplySmart.Homebridge.EventHandling;
 
 public interface IGarageDoorOpenerEventHandler
 {
-    const string MQTT_TOPIC = "homebridge/garage_door_opener/+/+/+/+/targetDoorState";
+    const string MQTT_TOPIC = "homebridge/garage_door_opener/+/+/+/+/setTargetDoorState";
     Task Handle(MqttApplicationMessageReceivedEventArgs e);
 }
 
@@ -18,7 +18,7 @@ internal class GarageDoorOpenerEventHandler(IGarageDoorService garageDoorService
 {
     public async Task Handle(MqttApplicationMessageReceivedEventArgs e)
     {
-        var name = e.ApplicationMessage.Topic.Replace("homebridge/garage_door_opener/", "").Replace("/targetDoorState", "");
+        var name = e.ApplicationMessage.Topic.Replace("homebridge/garage_door_opener/", "").Replace("/setTargetDoorState", "");
         var message = e.ApplicationMessage.ConvertPayloadToString();
 
         switch(message)

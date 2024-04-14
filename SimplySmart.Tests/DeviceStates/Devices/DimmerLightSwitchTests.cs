@@ -68,7 +68,7 @@ public class DimmerLightSwitchTests
         mockBrightness = 0.ToString();
 
         // Act
-        await dimmerSwitch.SetLevel(level);
+        await dimmerSwitch.SetCurrentLevel(level);
 
         // Assert
         Assert.Equal(LightSwitchState.ON, dimmerSwitch.State);
@@ -86,7 +86,7 @@ public class DimmerLightSwitchTests
         mockBrightness = level.ToString();
 
         // Act
-        await dimmerSwitch.SetLevel(level);
+        await dimmerSwitch.SetCurrentLevel(level);
 
         // Assert
         Assert.Equal(LightSwitchState.ON, dimmerSwitch.State);
@@ -103,7 +103,7 @@ public class DimmerLightSwitchTests
         mockBrightness = 50.ToString();
 
         // Act
-        await dimmerSwitch.SetLevel(level);
+        await dimmerSwitch.SetCurrentLevel(level);
 
         // Assert
         Assert.Equal(LightSwitchState.ON, dimmerSwitch.State);
@@ -121,7 +121,7 @@ public class DimmerLightSwitchTests
         mockBrightness = 0.ToString();
 
         // Act
-        await dimmerSwitch.SetLevel(level);
+        await dimmerSwitch.SetCurrentLevel(level);
 
         // Assert
         Assert.Equal(LightSwitchState.ON, dimmerSwitch.State);
@@ -139,7 +139,7 @@ public class DimmerLightSwitchTests
         mockBrightness = 50.ToString();
 
         // Act
-        await dimmerSwitch.SetLevel(level);
+        await dimmerSwitch.SetCurrentLevel(level);
 
         // Assert
         Assert.Equal(LightSwitchState.OFF, dimmerSwitch.State);
@@ -157,7 +157,7 @@ public class DimmerLightSwitchTests
         mockBrightness = level.ToString();
 
         // Act
-        await dimmerSwitch.SetLevel(level);
+        await dimmerSwitch.SetCurrentLevel(level);
 
         // Assert
         Assert.Equal(LightSwitchState.OFF, dimmerSwitch.State);

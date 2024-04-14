@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SimplySmart.Zwave.Abstractions;
+namespace SimplySmart.Homebridge.Abstractions;
 
-public interface IBinarySwitch
+public interface ISwitch
 {
-    Task SetCurrentValue(bool isOn);
+    Task SetToOn(bool isOn);
 }

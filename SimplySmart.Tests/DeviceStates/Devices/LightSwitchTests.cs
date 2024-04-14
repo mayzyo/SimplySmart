@@ -57,7 +57,7 @@ public class LightSwitchTests
         mockState = LightSwitchState.OFF.ToString();
 
         // Act
-        await lightSwitch.SetToOn(true);
+        await lightSwitch.SetCurrentValue(true);
 
         // Assert
         Assert.Equal(LightSwitchState.ON, lightSwitch.State);
@@ -72,7 +72,7 @@ public class LightSwitchTests
         mockState = LightSwitchState.ON.ToString();
 
         // Act
-        await lightSwitch.SetToOn(true);
+        await lightSwitch.SetCurrentValue(true);
 
         // Assert
         Assert.Equal(LightSwitchState.ON, lightSwitch.State);
@@ -87,7 +87,7 @@ public class LightSwitchTests
         mockState = LightSwitchState.AUTO_ON.ToString();
 
         // Act
-        await lightSwitch.SetToOn(true);
+        await lightSwitch.SetCurrentValue(true);
 
         // Assert
         Assert.Equal(LightSwitchState.AUTO_FORCED_ON, lightSwitch.State);
@@ -102,7 +102,7 @@ public class LightSwitchTests
         mockState = LightSwitchState.AUTO_OFF.ToString();
 
         // Act
-        await lightSwitch.SetToOn(true);
+        await lightSwitch.SetCurrentValue(true);
 
         // Assert
         Assert.Equal(LightSwitchState.AUTO_FORCED_ON, lightSwitch.State);
@@ -118,7 +118,7 @@ public class LightSwitchTests
         await ArrangeAutoPendingOff();
 
         // Act
-        await lightSwitch.SetToOn(true);
+        await lightSwitch.SetCurrentValue(true);
 
         // Assert
         Assert.Equal(LightSwitchState.AUTO_FORCED_ON, lightSwitch.State);
@@ -134,7 +134,7 @@ public class LightSwitchTests
         mockState = LightSwitchState.AUTO_FORCED_ON.ToString();
 
         // Act
-        await lightSwitch.SetToOn(true);
+        await lightSwitch.SetCurrentValue(true);
 
         // Assert
         Assert.Equal(LightSwitchState.AUTO_FORCED_ON, lightSwitch.State);
@@ -149,7 +149,7 @@ public class LightSwitchTests
         mockState = LightSwitchState.OFF.ToString();
 
         // Act
-        await lightSwitch.SetToOn(false);
+        await lightSwitch.SetCurrentValue(false);
 
         // Assert
         Assert.Equal(LightSwitchState.OFF, lightSwitch.State);
@@ -164,7 +164,7 @@ public class LightSwitchTests
         mockState = LightSwitchState.AUTO_ON.ToString();
 
         // Act
-        await lightSwitch.SetToOn(false);
+        await lightSwitch.SetCurrentValue(false);
 
         // Assert
         Assert.Equal(LightSwitchState.AUTO_OFF, lightSwitch.State);
@@ -179,7 +179,7 @@ public class LightSwitchTests
         mockState = LightSwitchState.AUTO_OFF.ToString();
 
         // Act
-        await lightSwitch.SetToOn(false);
+        await lightSwitch.SetCurrentValue(false);
 
         // Assert
         Assert.Equal(LightSwitchState.AUTO_OFF, lightSwitch.State);
@@ -194,7 +194,7 @@ public class LightSwitchTests
         await ArrangeAutoPendingOff();
 
         // Act
-        await lightSwitch.SetToOn(false);
+        await lightSwitch.SetCurrentValue(false);
 
         // Assert
         Assert.Equal(LightSwitchState.AUTO_OFF, lightSwitch.State);
@@ -210,7 +210,7 @@ public class LightSwitchTests
         mockState = LightSwitchState.AUTO_FORCED_ON.ToString();
 
         // Act
-        await lightSwitch.SetToOn(false);
+        await lightSwitch.SetCurrentValue(false);
 
         // Assert
         Assert.Equal(LightSwitchState.AUTO_OFF, lightSwitch.State);
@@ -364,7 +364,7 @@ public class LightSwitchTests
         await lightSwitch.AutoSetToOff();
 
         // Assert
-        Assert.Equal(LightSwitchState.AUTO_PENDING_OFF, lightSwitch.State);
+        Assert.Equal(LightSwitchState.AUTO_DELAYED_OFF, lightSwitch.State);
         Assert.True(lightSwitch.PendingTrigger);
         homebridgeEventSenderMock.Verify(x => x.LightSwitchOff("TestLightSwitch"), Times.Never);
         zwaveEventSenderMock.Verify(x => x.BinarySwitchOff("TestLightSwitch"), Times.Never);
@@ -390,7 +390,7 @@ public class LightSwitchTests
         mockState = LightSwitchState.AUTO_ON.ToString();
         await lightSwitch.AutoSetToOff();
 
-        if(lightSwitch.State != LightSwitchState.AUTO_PENDING_OFF)
+        if(lightSwitch.State != LightSwitchState.AUTO_DELAYED_OFF)
         {
             throw new Exception("Light Switch did not set to Auto Pending Off");
         }

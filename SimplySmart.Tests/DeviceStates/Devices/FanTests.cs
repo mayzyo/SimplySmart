@@ -57,7 +57,7 @@ public class FanTests
         mockState = ApplianceState.OFF.ToString();
 
         // Act
-        await fan.SetToOn(true);
+        await fan.SetCurrentValue(true);
 
         // Assert
         Assert.Equal(ApplianceState.ON, fan.State);
@@ -72,7 +72,7 @@ public class FanTests
         mockState = ApplianceState.ON.ToString();
 
         // Act
-        await fan.SetToOn(true);
+        await fan.SetCurrentValue(true);
 
         // Assert
         Assert.Equal(ApplianceState.ON, fan.State);
@@ -87,7 +87,7 @@ public class FanTests
         mockState = ApplianceState.ON.ToString();
 
         // Act
-        await fan.SetToOn(false);
+        await fan.SetCurrentValue(false);
 
         // Assert
         Assert.Equal(ApplianceState.OFF, fan.State);
@@ -102,7 +102,7 @@ public class FanTests
         mockState = ApplianceState.OFF.ToString();
 
         // Act
-        await fan.SetToOn(false);
+        await fan.SetCurrentValue(false);
 
         // Assert
         Assert.Equal(ApplianceState.OFF, fan.State);

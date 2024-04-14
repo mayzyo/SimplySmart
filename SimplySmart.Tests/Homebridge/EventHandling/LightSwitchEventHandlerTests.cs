@@ -36,7 +36,7 @@ public class LightSwitchEventHandlerTests
         await handler.Handle(eventArgs);
 
         // Assert
-        lightSwitchMock.Verify(x => x.SetToOn(true), Times.Once);
+        lightSwitchMock.Verify(x => x.SetCurrentValue(true), Times.Once);
     }
 
     [Fact]
@@ -51,7 +51,7 @@ public class LightSwitchEventHandlerTests
 
         // Act & Assert
         await Assert.ThrowsAsync<FormatException>(() => handler.Handle(eventArgs));
-        lightSwitchMock.Verify(x => x.SetToOn(It.IsAny<bool>()), Times.Never);
+        lightSwitchMock.Verify(x => x.SetCurrentValue(It.IsAny<bool>()), Times.Never);
     }
 
     [Fact]
