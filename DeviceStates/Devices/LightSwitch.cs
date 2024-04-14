@@ -178,7 +178,7 @@ public class LightSwitch(
 
     protected virtual async Task SendOnEvents()
     {
-        if(isZwave)
+        if(!isZwave)
         {
             await zwaveEventSender.BinarySwitchOn(name);
         }
@@ -187,7 +187,7 @@ public class LightSwitch(
 
     protected virtual async Task SendOffEvents()
     {
-        if(isZwave)
+        if(!isZwave)
         {
             await zwaveEventSender.BinarySwitchOff(name);
         }

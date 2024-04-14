@@ -80,7 +80,7 @@ public class DimmerLightSwitch : LightSwitch, IDimmerLightSwitch
 
     protected override async Task SendOnEvents()
     {
-        if(isZwave)
+        if(!isZwave)
         {
             await zwaveEventSender.MultiLevelSwitchUpdate(name, brightness);
         }
@@ -89,7 +89,7 @@ public class DimmerLightSwitch : LightSwitch, IDimmerLightSwitch
 
     protected override async Task SendOffEvents()
     {
-        if(isZwave)
+        if(!isZwave)
         {
             await zwaveEventSender.MultiLevelSwitchUpdate(name, 0);
         }

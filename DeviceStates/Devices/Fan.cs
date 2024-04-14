@@ -72,7 +72,7 @@ internal class Fan(
     async Task SetToOn()
     {
         await homebridgeEventSender.FanOn(name);
-        if(isZwave)
+        if(!isZwave)
         {
             await zwaveEventSender.BinarySwitchOn(name);
         }
@@ -81,7 +81,7 @@ internal class Fan(
     async Task SetToOff()
     {
         await homebridgeEventSender.FanOff(name);
-        if(isZwave)
+        if(!isZwave)
         {
             await zwaveEventSender.BinarySwitchOff(name);
         }

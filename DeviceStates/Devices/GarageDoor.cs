@@ -173,7 +173,7 @@ internal class GarageDoor(
         await homebridgeEventSender.GarageDoorOpenerOn(name);
         await homebridgeEventSender.GarageDoorOpenerMoving(name);
 
-        if(isZwave)
+        if(!isZwave)
         {
             // Smart implant on push triggers the device regardless of the state it is in.
             await zwaveEventSender.BinarySwitchOn(name);
@@ -185,7 +185,7 @@ internal class GarageDoor(
         await homebridgeEventSender.GarageDoorOpenerOff(name);
         await homebridgeEventSender.GarageDoorOpenerMoving(name);
 
-        if(isZwave)
+        if(!isZwave)
         {
             // Smart implant on push triggers the device regardless of the state it is in.
             await zwaveEventSender.BinarySwitchOn(name);
