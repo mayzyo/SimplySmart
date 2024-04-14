@@ -13,12 +13,16 @@ namespace SimplySmart.DeviceStates.Factories;
 
 public interface IFanFactory
 {
-    IFan CreateFan(PowerSwitch config);
+    IFan CreateFan(PowerSwitch config, bool isZwave = false);
 }
 
-internal class FanFactory(IStateStore stateStorageService, IHomebridgeEventSender homebridgeEventSender, IZwaveEventSender zwaveEventSender) : IFanFactory
+internal class FanFactory(
+    IStateStore stateStore,
+    IHomebridgeEventSender homebridgeEventSender,
+    IZwaveEventSender zwaveEventSender
+) : IFanFactory
 {
-    public IFan CreateFan(PowerSwitch config) =>
-        new Fan(stateStorageService, config.name, homebridgeEventSender, zwaveEventSender)
+    public IFan CreateFan(PowerSwitch config, bool isZwave = false) =>
+        new Fan(stateStore, homebridgeEventSender, zwaveEventSender, config.name, isZwave)
             .Connect();
 }

@@ -25,7 +25,16 @@ public interface IGarageDoor : IBinarySwitch
     Task SetToComplete();
 }
 
-internal class GarageDoor(ILogger<IGarageDoor> logger, IStateStore stateStore, ISchedulerFactory schedulerFactory, IHomebridgeEventSender homebridgeEventSender, IZwaveEventSender zwaveEventSender, IFrigateWebhookSender frigateWebhookSender, string name) : IGarageDoor
+internal class GarageDoor(
+    ILogger<IGarageDoor> logger,
+    IStateStore stateStore,
+    ISchedulerFactory schedulerFactory,
+    IHomebridgeEventSender homebridgeEventSender,
+    IZwaveEventSender zwaveEventSender,
+    IFrigateWebhookSender frigateWebhookSender,
+    string name,
+    bool isZwave = false
+) : IGarageDoor
 {
     const int DELAY_DEFAULT = 20000;
 
@@ -163,16 +172,24 @@ internal class GarageDoor(ILogger<IGarageDoor> logger, IStateStore stateStore, I
     {
         await homebridgeEventSender.GarageDoorOpenerOn(name);
         await homebridgeEventSender.GarageDoorOpenerMoving(name);
-        // Smart implant on push triggers the device regardless of the state it is in.
-        await zwaveEventSender.BinarySwitchOn(name);
+
+        if(isZwave)
+        {
+            // Smart implant on push triggers the device regardless of the state it is in.
+            await zwaveEventSender.BinarySwitchOn(name);
+        }
     }
 
     async Task SetToClosing()
     {
         await homebridgeEventSender.GarageDoorOpenerOff(name);
         await homebridgeEventSender.GarageDoorOpenerMoving(name);
-        // Smart implant on push triggers the device regardless of the state it is in.
-        await zwaveEventSender.BinarySwitchOn(name);
+
+        if(isZwave)
+        {
+            // Smart implant on push triggers the device regardless of the state it is in.
+            await zwaveEventSender.BinarySwitchOn(name);
+        }
     }
 
     async Task CompleteGarageDoorActivity()

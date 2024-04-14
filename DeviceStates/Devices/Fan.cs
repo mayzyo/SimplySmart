@@ -17,7 +17,13 @@ public interface IFan : IAppliance, IBinarySwitch
     Task Publish();
 }
 
-internal class Fan(IStateStore stateStorage, string name, IHomebridgeEventSender homebridgeEventSender, IZwaveEventSender zwaveEventSender) : IFan
+internal class Fan(
+    IStateStore stateStorage,
+    IHomebridgeEventSender homebridgeEventSender,
+    IZwaveEventSender zwaveEventSender,
+    string name,
+    bool isZwave = false
+) : IFan
 {
     public ApplianceState State { get { return stateMachine.State; } }
     public readonly StateMachine<ApplianceState, ApplianceCommand> stateMachine = new(
@@ -66,12 +72,18 @@ internal class Fan(IStateStore stateStorage, string name, IHomebridgeEventSender
     async Task SetToOn()
     {
         await homebridgeEventSender.FanOn(name);
-        await zwaveEventSender.BinarySwitchOn(name);
+        if(isZwave)
+        {
+            await zwaveEventSender.BinarySwitchOn(name);
+        }
     }
 
     async Task SetToOff()
     {
         await homebridgeEventSender.FanOff(name);
-        await zwaveEventSender.BinarySwitchOff(name);
+        if(isZwave)
+        {
+            await zwaveEventSender.BinarySwitchOff(name);
+        }
     }
 }

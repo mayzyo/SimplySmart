@@ -28,7 +28,7 @@ internal class MultiLevelSwitchService(
         {
             if (TryGetLightSwitch(key, out LightSwitch? lightSwitch) && lightSwitch != null)
             {
-                return lightSwitchFactory.CreateDimmerLightSwitch(lightSwitch);
+                return lightSwitchFactory.CreateDimmerLightSwitch(lightSwitch, true);
             }
 
             logger.LogError($"Multi Level Switch with {key} does not exist");

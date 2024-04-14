@@ -31,13 +31,15 @@ public class DimmerLightSwitch : LightSwitch, IDimmerLightSwitch
         ISchedulerFactory schedulerFactory,
         IHomebridgeEventSender homebridgeEventSender,
         IZwaveEventSender zwaveEventSender,
-        string name
+        string name,
+        bool isZwave = false
     ) : base(
         stateStore,
         schedulerFactory,
         homebridgeEventSender,
         zwaveEventSender,
-        name
+        name,
+        isZwave
     )
     {
         if (ushort.TryParse(stateStore.GetState(name + "_brightness"), out ushort brightness))
@@ -76,26 +78,21 @@ public class DimmerLightSwitch : LightSwitch, IDimmerLightSwitch
         }
     }
 
-    protected override LightSwitchState InitialState()
-    {
-        var stateString = stateStore.GetState(name);
-        if (Enum.TryParse(stateString, out LightSwitchState state))
-        {
-            return state;
-        }
-
-        return LightSwitchState.OFF;
-    }
-
     protected override async Task SendOnEvents()
     {
-        await zwaveEventSender.MultiLevelSwitchUpdate(name, brightness);
+        if(isZwave)
+        {
+            await zwaveEventSender.MultiLevelSwitchUpdate(name, brightness);
+        }
         await homebridgeEventSender.LightSwitchOn(name);
     }
 
     protected override async Task SendOffEvents()
     {
-        await zwaveEventSender.MultiLevelSwitchUpdate(name, 0);
+        if(isZwave)
+        {
+            await zwaveEventSender.MultiLevelSwitchUpdate(name, 0);
+        }
         await homebridgeEventSender.LightSwitchOff(name);
     }
 }

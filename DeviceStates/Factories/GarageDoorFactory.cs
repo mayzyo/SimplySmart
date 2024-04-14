@@ -14,12 +14,19 @@ using System.Threading.Tasks;
 namespace SimplySmart.DeviceStates.Factories;
 public interface IGarageDoorFactory
 {
-    IGarageDoor CreateGarageDoor(SmartImplant config);
+    IGarageDoor CreateGarageDoor(SmartImplant config, bool isZwave = false);
 }
 
-internal class GarageDoorFactory(ILogger<IGarageDoor> logger, IStateStore stateStore, ISchedulerFactory schedulerFactory, IHomebridgeEventSender homebridgeEventSender, IZwaveEventSender zwaveEventSender, IFrigateWebhookSender frigateWebhookSender) : IGarageDoorFactory
+internal class GarageDoorFactory(
+    ILogger<IGarageDoor> logger,
+    IStateStore stateStore,
+    ISchedulerFactory schedulerFactory,
+    IHomebridgeEventSender homebridgeEventSender,
+    IZwaveEventSender zwaveEventSender,
+    IFrigateWebhookSender frigateWebhookSender
+) : IGarageDoorFactory
 {
-    public IGarageDoor CreateGarageDoor(SmartImplant config) => 
-        new GarageDoor(logger, stateStore, schedulerFactory, homebridgeEventSender, zwaveEventSender, frigateWebhookSender, config.name)
+    public IGarageDoor CreateGarageDoor(SmartImplant config, bool isZwave = false) => 
+        new GarageDoor(logger, stateStore, schedulerFactory, homebridgeEventSender, zwaveEventSender, frigateWebhookSender, config.name, isZwave)
             .Connect();
 }

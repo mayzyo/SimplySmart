@@ -24,19 +24,38 @@ public interface ILightSwitch : IBinarySwitch, IAutoSwitch
     Task CompletePendingOff();
 }
 
-public class LightSwitch : ILightSwitch
+public class LightSwitch(
+    IStateStore stateStore,
+    ISchedulerFactory schedulerFactory,
+    IHomebridgeEventSender homebridgeEventSender,
+    IZwaveEventSender zwaveEventSender,
+    string name,
+    bool isZwave = false
+) : ILightSwitch
 {
     const int STAY_ON_INCREMENT = 60000;
 
     public LightSwitchState State { get { return stateMachine.State; } }
     public bool PendingTrigger { get { return true; } }
-    public readonly StateMachine<LightSwitchState, LightSwitchCommand> stateMachine;
-    public readonly string name;
+    public readonly StateMachine<LightSwitchState, LightSwitchCommand> stateMachine = new(
+            () =>
+            {
+                var stateString = stateStore.GetState(name);
+                if (Enum.TryParse(stateString, out LightSwitchState state))
+                {
+                    return state;
+                }
 
-    protected readonly IStateStore stateStore;
-    protected readonly ISchedulerFactory schedulerFactory;
-    protected readonly IHomebridgeEventSender homebridgeEventSender;
-    protected readonly IZwaveEventSender zwaveEventSender;
+                return LightSwitchState.OFF;
+            },
+            s => stateStore.UpdateState(name, s.ToString())
+        );
+    public readonly string name = name;
+    protected readonly bool isZwave = isZwave;
+    protected readonly IStateStore stateStore = stateStore;
+    protected readonly ISchedulerFactory schedulerFactory = schedulerFactory;
+    protected readonly IHomebridgeEventSender homebridgeEventSender = homebridgeEventSender;
+    protected readonly IZwaveEventSender zwaveEventSender = zwaveEventSender;
     protected int StayOnCount
     {
         get
@@ -50,20 +69,6 @@ public class LightSwitch : ILightSwitch
             return 1;
         }
         set { stateStore.UpdateState(name + "_stayon", value.ToString()); }
-    }
-
-    public LightSwitch(IStateStore stateStore, ISchedulerFactory schedulerFactory, IHomebridgeEventSender homebridgeEventSender, IZwaveEventSender zwaveEventSender, string name)
-    {
-        this.stateStore = stateStore;
-        this.schedulerFactory = schedulerFactory;
-        this.homebridgeEventSender = homebridgeEventSender;
-        this.zwaveEventSender = zwaveEventSender;
-        this.name = name;
-
-        stateMachine = new(
-            InitialState,
-            s => stateStore.UpdateState(name, s.ToString())
-        );
     }
 
     public virtual ILightSwitch Connect()
@@ -171,26 +176,21 @@ public class LightSwitch : ILightSwitch
             .Ignore(LightSwitchCommand.TURN_ON);
     }
 
-    protected virtual LightSwitchState InitialState()
-    {
-        var stateString = stateStore.GetState(name);
-        if (Enum.TryParse(stateString, out LightSwitchState state))
-        {
-            return state;
-        }
-
-        return LightSwitchState.OFF;
-    }
-
     protected virtual async Task SendOnEvents()
     {
-        await zwaveEventSender.BinarySwitchOn(name);
+        if(isZwave)
+        {
+            await zwaveEventSender.BinarySwitchOn(name);
+        }
         await homebridgeEventSender.LightSwitchOn(name);
     }
 
     protected virtual async Task SendOffEvents()
     {
-        await zwaveEventSender.BinarySwitchOff(name);
+        if(isZwave)
+        {
+            await zwaveEventSender.BinarySwitchOff(name);
+        }
         await homebridgeEventSender.LightSwitchOff(name);
     }
 
