@@ -21,6 +21,10 @@ using SimplySmart.HouseStates.Factories;
 using SimplySmart.Core.Abstractions;
 using Quartz;
 using SimplySmart.Frigate.Services;
+using SimplySmart.Zwave.Stubs;
+using SimplySmart.Homebridge.Stubs;
+using SimplySmart.Frigate.Stubs;
+using SimplySmart.Core.Stubs;
 
 // Reference: https://code-maze.com/dotnet-factory-pattern-dependency-injection/
 
@@ -55,7 +59,13 @@ Host.CreateDefaultBuilder(args)
             opt.WaitForJobsToComplete = true;
         });
         services.AddSingleton<IStateStore, RedisStateStore>();
-        services.AddScoped<IStateSyncService, StateSyncService>();
+        if(Environment.GetEnvironmentVariable("READ_ONLY") != "true") {
+            services.AddScoped<IStateSyncService, StateSyncService>();
+            services.AddTransient<IPassthroughEventSender, PassthroughEventSender>();
+        } else {
+            services.AddScoped<IStateSyncService, StateSyncServiceStub>();
+            services.AddTransient<IPassthroughEventSender, PassthroughEventSenderStub>();
+        }
 
         // Devices Module
         services.AddTransient<IFanFactory, FanFactory>();
@@ -74,7 +84,11 @@ Host.CreateDefaultBuilder(args)
         services.AddScoped<IHouseService, HouseService>();
 
         // Zwave Module
-        services.AddTransient<IZwaveEventSender, ZwaveEventSender>();
+        if(Environment.GetEnvironmentVariable("READ_ONLY") != "true") {
+            services.AddTransient<IZwaveEventSender, ZwaveEventSender>();
+        } else {
+            services.AddTransient<IZwaveEventSender, ZwaveEventSenderStub>();
+        }
         services.AddTransient<IBinarySwitchEventHandler, BinarySwitchEventHandler>();
         services.AddTransient<IMultiLevelSwitchEventHandler, MultiLevelSwitchEventHandler>();
         services.AddTransient<ICentralSceneEventHandler, CentralSceneEventHandler>();
@@ -83,17 +97,24 @@ Host.CreateDefaultBuilder(args)
         services.AddScoped<IMultiLevelSwitchService, MultiLevelSwitchService>();
 
         // Frigate Module
+        if(Environment.GetEnvironmentVariable("READ_ONLY") != "true") {
+            services.AddTransient<IFrigateWebhookSender, FrigateWebhookSender>();
+        } else {
+            services.AddTransient<IFrigateWebhookSender, FrigateWebhookSenderStub>();
+        }
         services.AddTransient<IFrigateEventHandler, FrigateEventHandler>();
         services.AddTransient<IPersonEventHandler, PersonEventHandler>();
-        services.AddTransient<IPassthroughEventSender, PassthroughEventSender>();
-        services.AddTransient<IFrigateWebhookSender, FrigateWebhookSender>();
 
         // Homebridge Module
+        if(Environment.GetEnvironmentVariable("READ_ONLY") != "true") {
+            services.AddTransient<IHomebridgeEventSender, HomebridgeEventSender>();
+        } else {
+            services.AddTransient<IHomebridgeEventSender, HomebridgeEventSenderStub>();
+        }
         services.AddTransient<IFanEventHandler, FanEventHandler>();
         services.AddTransient<ILightSwitchEventHandler, LightSwitchEventHandler>();
         services.AddTransient<IDimmerLightSwitchEventHandler, DimmerLightSwitchEventHandler>();
         services.AddTransient<IGarageDoorOpenerEventHandler, GarageDoorOpenerEventHandler>();
-        services.AddTransient<IHomebridgeEventSender, HomebridgeEventSender>();
         services.AddTransient<ISwitchEventHandler, SwitchEventHandler>();
         services.AddTransient<ISecurityEventHandler, SecurityEventHandler>();
         services.AddScoped<ISwitchService, SwitchService>();

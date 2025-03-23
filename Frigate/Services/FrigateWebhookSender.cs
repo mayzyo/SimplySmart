@@ -48,7 +48,7 @@ internal class FrigateWebhookSender(IManagedMqttClient mqttClient) : IFrigateWeb
         return "";
     }
 
-    static string GetCredentials()
+    protected static string GetCredentials()
     {
         var username = Environment.GetEnvironmentVariable("FRIGATE_USERNAME");
         var password = Environment.GetEnvironmentVariable("FRIGATE_PASSWORD");

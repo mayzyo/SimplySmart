@@ -12,7 +12,7 @@ namespace SimplySmart.Nodemation.EventHandling;
 
 public interface IGarageDoorEventHandler
 {
-    const string MQTT_TOPIC = "nodemation/garageDoor/closed/#";
+    const string MQTT_TOPIC = "simply_smart/garageDoor/closed/#";
     Task Handle(MqttApplicationMessageReceivedEventArgs e);
 }
 
@@ -21,7 +21,7 @@ internal class GarageDoorEventHandler(ILogger<IGarageDoorEventHandler> logger, I
 {
     public async Task Handle(MqttApplicationMessageReceivedEventArgs e)
     {
-        var name = e.ApplicationMessage.Topic.Replace("nodemation/garageDoor/closed/", "");
+        var name = e.ApplicationMessage.Topic.Replace("simply_smart/garageDoor/closed/", "");
         var message = e.ApplicationMessage.ConvertPayloadToString();
         if(TryMessageCleanup(message, out bool isClosed))
         {

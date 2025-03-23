@@ -87,7 +87,7 @@ internal class HomebridgeEventSender(IManagedMqttClient mqttClient) : IHomebridg
         await mqttClient.EnqueueAsync("homebridge/security/getCurrentState", ConvertState(state));
     }
 
-    static string ConvertState(HouseSecurityState state)
+    protected static string ConvertState(HouseSecurityState state)
     {
         return state switch
         {

@@ -8,6 +8,10 @@ using System.Threading.Tasks;
 
 namespace SimplySmart.HouseStates.Services;
 
+/// <summary>
+/// Represents the state of house based smart features.
+/// This excludes explicit IOT devices, and is focused on the state such as security alert level.
+/// </summary>
 public interface IHouseService
 {
     IHouseSecurity Security { get; }
