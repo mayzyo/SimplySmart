@@ -1,5 +1,6 @@
 ﻿using SimplySmart.Core.Abstractions;
 using SimplySmart.HouseStates.Abstractions;
+using SimplySmart.Zwave.Abstractions;
 using Stateless;
 using System;
 using System.Collections.Generic;

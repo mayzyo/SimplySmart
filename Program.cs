@@ -92,12 +92,15 @@ Host.CreateDefaultBuilder(args)
         services.AddTransient<IBinarySwitchEventHandler, BinarySwitchEventHandler>();
         services.AddTransient<IMultiLevelSwitchEventHandler, MultiLevelSwitchEventHandler>();
         services.AddTransient<ICentralSceneEventHandler, CentralSceneEventHandler>();
-        services.AddTransient<INotificationEventHandler, NotificationEventHandler>();
+        services.AddTransient<IMotionSensorEventHandler, MotionSensorEventHandler>();
+        services.AddTransient<IAccessSensorEventHandler, AccessSensorEventHandler>();
+        services.AddTransient<IElectricMeterEventHandler, ElectricMeterEventHandler>();
         services.AddScoped<IBinarySwitchService, BinarySwitchService>();
         services.AddScoped<IMultiLevelSwitchService, MultiLevelSwitchService>();
+        services.AddScoped<IAccessSensorService, AccessSensorService>();
 
         // Frigate Module
-        if(Environment.GetEnvironmentVariable("READ_ONLY") != "true") {
+        if (Environment.GetEnvironmentVariable("READ_ONLY") != "true") {
             services.AddTransient<IFrigateWebhookSender, FrigateWebhookSender>();
         } else {
             services.AddTransient<IFrigateWebhookSender, FrigateWebhookSenderStub>();

@@ -10,11 +10,10 @@ using SimplySmart.Zwave.Services;
 using Stateless;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace SimplySmart.DeviceStates.Devices;
 
-public interface IGarageDoor : IBinarySwitch, ISwitch
+public interface IGarageDoor : IBinarySwitch, ISwitch, IAccessControl
 {
     IGarageDoor Connect();
     GarageDoorState State { get; }
@@ -33,7 +32,9 @@ internal class GarageDoor(
     IHomebridgeEventSender homebridgeEventSender,
     IZwaveEventSender zwaveEventSender,
     IFrigateWebhookSender frigateWebhookSender,
-    string name
+    string name,
+    bool? closeDetect = false,
+    bool? openDetect = false
 ) : IGarageDoor
 {
     const int DELAY_DEFAULT = 20000;
@@ -90,10 +91,17 @@ internal class GarageDoor(
             .Ignore(GarageDoorCommand.OPEN)
             .Ignore(GarageDoorCommand.CLOSE);
 
-        stateMachine.Configure(GarageDoorState.CLOSING)
-            .OnEntryAsync(SendCurrentlyClosingEvents)
-            .OnEntryAsync(ScheduleMovingJob)
-            .OnExitAsync(CancelMovingJob)
+        var closingConfig = stateMachine.Configure(GarageDoorState.CLOSING)
+            .OnEntryAsync(SendCurrentlyClosingEvents);
+
+        if (closeDetect != true)
+        {
+            closingConfig = closingConfig
+                .OnEntryAsync(ScheduleMovingJob)
+                .OnExitAsync(CancelMovingJob);
+        }
+
+        closingConfig
             .Permit(GarageDoorCommand.COMPLETE, GarageDoorState.CLOSED)
             .Ignore(GarageDoorCommand.SET_ACTIVE)
             .Ignore(GarageDoorCommand.OPEN)
@@ -105,10 +113,17 @@ internal class GarageDoor(
             .Ignore(GarageDoorCommand.OPEN)
             .Ignore(GarageDoorCommand.CLOSE);
 
-        stateMachine.Configure(GarageDoorState.OPENING)
-            .OnEntryAsync(SendCurrentlyOpeningEvents)
-            .OnEntryAsync(ScheduleMovingJob)
-            .OnExitAsync(CancelMovingJob)
+        var openingConfig = stateMachine.Configure(GarageDoorState.OPENING)
+            .OnEntryAsync(SendCurrentlyOpeningEvents);
+
+        if (openDetect != true)
+        {
+            openingConfig = openingConfig
+                .OnEntryAsync(ScheduleMovingJob)
+                .OnExitAsync(CancelMovingJob);
+        }
+
+        openingConfig
             .Permit(GarageDoorCommand.COMPLETE, GarageDoorState.OPENED)
             .Ignore(GarageDoorCommand.SET_ACTIVE)
             .Ignore(GarageDoorCommand.OPEN)
@@ -158,7 +173,30 @@ internal class GarageDoor(
         }
     }
 
-    // Unused. Waiting for classifier model.
+    public async Task HandleContactChange(bool isInContact)
+    {
+        await SetToCompleteWhenDetectingClose(isInContact);
+        await SetToCompleteWhenDetectingOpen(isInContact);
+    }
+
+    async Task SetToCompleteWhenDetectingClose(bool isInContact)
+    {
+        // Ignore if not detecting.
+        if(isInContact && closeDetect == true)
+        {
+            await SetToComplete();
+        }
+    }
+
+    async Task SetToCompleteWhenDetectingOpen(bool isInContact)
+    {
+        // Ignore if not detecting.
+        if(!isInContact && openDetect == true)
+        {
+            await SetToComplete();
+        }
+    }
+
     public async Task StateVerified(bool isClosed)
     {
         var detectedState = isClosed ? GarageDoorState.CLOSED : GarageDoorState.OPENED;

@@ -20,6 +20,8 @@ public class ApplicationConfig
     public virtual List<MultiSensor> multiSensors { get; set; }
 
     public virtual List<PowerSwitch> powerSwitches { get; set; }
+
+    public virtual List<DoorWindowSensor> doorWindowSensors { get; set; }
 }
 
 public class Camera
@@ -43,6 +45,11 @@ public class SmartImplant
     public string name { get; set; }
 
     public string type { get; set; }
+
+    // If type is garageDoor
+    public bool? closeDetect { get; set; }
+
+    public bool? openDetect { get; set; }
 }
 
 public class Fob
@@ -59,6 +66,7 @@ public class FobButton
     public string command { get; set; }
 }
 
+// Includes trisensor. We'll use boolean to determine if it has certain capability, similar to isDimmer.
 public class MultiSensor
 {
     public string name { get; set; }
@@ -71,4 +79,20 @@ public class PowerSwitch
     public string name { get; set; }
 
     public string type { get; set; }
+    // If type is sensor
+    public PowerSwitchSensor? threshold { get; set; }
+}
+
+public class PowerSwitchSensor
+{
+    public int voltage { get; set; }
+    // Turn on when voltage is below threshold
+    public string? lightSwitch { get; set; }
+}
+
+public class DoorWindowSensor
+{
+    public string name { get; set; }
+
+    public string? garageDoor { get; set; }
 }

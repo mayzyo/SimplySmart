@@ -99,7 +99,9 @@ public class EventBusService(ILogger<EventBusService> logger, IServiceProvider s
             new MqttTopicFilterBuilder().WithTopic(IBinarySwitchEventHandler.MQTT_TOPIC).Build(),
             new MqttTopicFilterBuilder().WithTopic(IMultiLevelSwitchEventHandler.MQTT_TOPIC).Build(),
             new MqttTopicFilterBuilder().WithTopic(ICentralSceneEventHandler.MQTT_TOPIC).Build(),
-            new MqttTopicFilterBuilder().WithTopic(INotificationEventHandler.MQTT_TOPIC).Build(),
+            new MqttTopicFilterBuilder().WithTopic(IMotionSensorEventHandler.MQTT_TOPIC).Build(),
+            new MqttTopicFilterBuilder().WithTopic(IAccessSensorEventHandler.MQTT_TOPIC).Build(),
+            new MqttTopicFilterBuilder().WithTopic(IElectricMeterEventHandler.MQTT_TOPIC).Build(),
         ];
     }
 
@@ -173,9 +175,19 @@ public class EventBusService(ILogger<EventBusService> logger, IServiceProvider s
             var handler = scope.ServiceProvider.GetRequiredService<ICentralSceneEventHandler>();
             await handler.Handle(e);
         }
-        else if (MqttTopicFilterComparer.Compare(topic, INotificationEventHandler.MQTT_TOPIC) == MqttTopicFilterCompareResult.IsMatch)
+        else if (MqttTopicFilterComparer.Compare(topic, IMotionSensorEventHandler.MQTT_TOPIC) == MqttTopicFilterCompareResult.IsMatch)
         {
-            var handler = scope.ServiceProvider.GetRequiredService<INotificationEventHandler>();
+            var handler = scope.ServiceProvider.GetRequiredService<IMotionSensorEventHandler>();
+            await handler.Handle(e);
+        }
+        else if (MqttTopicFilterComparer.Compare(topic, IAccessSensorEventHandler.MQTT_TOPIC) == MqttTopicFilterCompareResult.IsMatch)
+        {
+            var handler = scope.ServiceProvider.GetRequiredService<IAccessSensorEventHandler>();
+            await handler.Handle(e);
+        }
+        else if (MqttTopicFilterComparer.Compare(topic, IElectricMeterEventHandler.MQTT_TOPIC) == MqttTopicFilterCompareResult.IsMatch)
+        {
+            var handler = scope.ServiceProvider.GetRequiredService<IElectricMeterEventHandler>();
             await handler.Handle(e);
         }
     }

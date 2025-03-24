@@ -10,7 +10,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 namespace SimplySmart.DeviceStates.Factories;
 public interface IGarageDoorFactory
 {
@@ -27,6 +26,6 @@ internal class GarageDoorFactory(
 ) : IGarageDoorFactory
 {
     public IGarageDoor CreateGarageDoor(SmartImplant config) => 
-        new GarageDoor(logger, stateStore, schedulerFactory, homebridgeEventSender, zwaveEventSender, frigateWebhookSender, config.name)
+        new GarageDoor(logger, stateStore, schedulerFactory, homebridgeEventSender, zwaveEventSender, frigateWebhookSender, config.name, config.closeDetect, config.openDetect)
             .Connect();
 }
