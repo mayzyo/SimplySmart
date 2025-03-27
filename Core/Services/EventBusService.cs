@@ -101,7 +101,7 @@ public class EventBusService(ILogger<EventBusService> logger, IServiceProvider s
             new MqttTopicFilterBuilder().WithTopic(ICentralSceneEventHandler.MQTT_TOPIC).Build(),
             new MqttTopicFilterBuilder().WithTopic(IMotionSensorEventHandler.MQTT_TOPIC).Build(),
             new MqttTopicFilterBuilder().WithTopic(IAccessSensorEventHandler.MQTT_TOPIC).Build(),
-            new MqttTopicFilterBuilder().WithTopic(IElectricMeterEventHandler.MQTT_TOPIC).Build(),
+            new MqttTopicFilterBuilder().WithTopic(IWattsMeterEventHandler.MQTT_TOPIC).Build(),
         ];
     }
 
@@ -185,9 +185,9 @@ public class EventBusService(ILogger<EventBusService> logger, IServiceProvider s
             var handler = scope.ServiceProvider.GetRequiredService<IAccessSensorEventHandler>();
             await handler.Handle(e);
         }
-        else if (MqttTopicFilterComparer.Compare(topic, IElectricMeterEventHandler.MQTT_TOPIC) == MqttTopicFilterCompareResult.IsMatch)
+        else if (MqttTopicFilterComparer.Compare(topic, IWattsMeterEventHandler.MQTT_TOPIC) == MqttTopicFilterCompareResult.IsMatch)
         {
-            var handler = scope.ServiceProvider.GetRequiredService<IElectricMeterEventHandler>();
+            var handler = scope.ServiceProvider.GetRequiredService<IWattsMeterEventHandler>();
             await handler.Handle(e);
         }
     }

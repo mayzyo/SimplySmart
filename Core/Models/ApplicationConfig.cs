@@ -78,15 +78,17 @@ public class PowerSwitch
 {
     public string name { get; set; }
 
-    public string type { get; set; }
+    public string? type { get; set; }
     // If type is sensor
-    public PowerSwitchSensor? threshold { get; set; }
+    public WattsSensor? wattsSensor { get; set; }
 }
 
-public class PowerSwitchSensor
+public class WattsSensor
 {
-    public int voltage { get; set; }
-    // Turn on when voltage is below threshold
+    public int threshold { get; set; }
+
+    required public string type { get; set; }
+
     public string? lightSwitch { get; set; }
 }
 

@@ -94,10 +94,11 @@ Host.CreateDefaultBuilder(args)
         services.AddTransient<ICentralSceneEventHandler, CentralSceneEventHandler>();
         services.AddTransient<IMotionSensorEventHandler, MotionSensorEventHandler>();
         services.AddTransient<IAccessSensorEventHandler, AccessSensorEventHandler>();
-        services.AddTransient<IElectricMeterEventHandler, ElectricMeterEventHandler>();
+        services.AddTransient<IWattsMeterEventHandler, WattsMeterEventHandler>();
         services.AddScoped<IBinarySwitchService, BinarySwitchService>();
         services.AddScoped<IMultiLevelSwitchService, MultiLevelSwitchService>();
         services.AddScoped<IAccessSensorService, AccessSensorService>();
+        services.AddScoped<IWattsMeterService, WattsMeterService>();
 
         // Frigate Module
         if (Environment.GetEnvironmentVariable("READ_ONLY") != "true") {

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SimplySmart.Zwave.Abstractions;
 
-public interface IElectricMeter
+public interface IWattsMeter
 {
-    void MatchThreshold(bool isBelow);
+    Task HandleWattage(float watts);
 }

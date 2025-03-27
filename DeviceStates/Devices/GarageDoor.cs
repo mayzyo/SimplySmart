@@ -91,21 +91,25 @@ internal class GarageDoor(
             .Ignore(GarageDoorCommand.OPEN)
             .Ignore(GarageDoorCommand.CLOSE);
 
-        var closingConfig = stateMachine.Configure(GarageDoorState.CLOSING)
-            .OnEntryAsync(SendCurrentlyClosingEvents);
-
         if (closeDetect != true)
         {
-            closingConfig = closingConfig
+            stateMachine.Configure(GarageDoorState.CLOSING)
+                .OnEntryAsync(SendCurrentlyClosingEvents)
                 .OnEntryAsync(ScheduleMovingJob)
-                .OnExitAsync(CancelMovingJob);
+                .OnExitAsync(CancelMovingJob)
+                .Permit(GarageDoorCommand.COMPLETE, GarageDoorState.CLOSED)
+                .Ignore(GarageDoorCommand.SET_ACTIVE)
+                .Ignore(GarageDoorCommand.OPEN)
+                .Ignore(GarageDoorCommand.CLOSE);
+        } else
+        {
+            stateMachine.Configure(GarageDoorState.CLOSING)
+                .OnEntryAsync(SendCurrentlyClosingEvents)
+                .Permit(GarageDoorCommand.COMPLETE, GarageDoorState.CLOSED)
+                .Ignore(GarageDoorCommand.SET_ACTIVE)
+                .Ignore(GarageDoorCommand.OPEN)
+                .Ignore(GarageDoorCommand.CLOSE);
         }
-
-        closingConfig
-            .Permit(GarageDoorCommand.COMPLETE, GarageDoorState.CLOSED)
-            .Ignore(GarageDoorCommand.SET_ACTIVE)
-            .Ignore(GarageDoorCommand.OPEN)
-            .Ignore(GarageDoorCommand.CLOSE);
 
         stateMachine.Configure(GarageDoorState.PENDING_OPENING)
             .OnEntryAsync(SendSetToActiveEvent)
@@ -113,21 +117,26 @@ internal class GarageDoor(
             .Ignore(GarageDoorCommand.OPEN)
             .Ignore(GarageDoorCommand.CLOSE);
 
-        var openingConfig = stateMachine.Configure(GarageDoorState.OPENING)
-            .OnEntryAsync(SendCurrentlyOpeningEvents);
-
         if (openDetect != true)
         {
-            openingConfig = openingConfig
+            stateMachine.Configure(GarageDoorState.OPENING)
+                .OnEntryAsync(SendCurrentlyOpeningEvents)
                 .OnEntryAsync(ScheduleMovingJob)
-                .OnExitAsync(CancelMovingJob);
+                .OnExitAsync(CancelMovingJob)
+                .Permit(GarageDoorCommand.COMPLETE, GarageDoorState.OPENED)
+                .Ignore(GarageDoorCommand.SET_ACTIVE)
+                .Ignore(GarageDoorCommand.OPEN)
+                .Ignore(GarageDoorCommand.CLOSE);
         }
-
-        openingConfig
-            .Permit(GarageDoorCommand.COMPLETE, GarageDoorState.OPENED)
-            .Ignore(GarageDoorCommand.SET_ACTIVE)
-            .Ignore(GarageDoorCommand.OPEN)
-            .Ignore(GarageDoorCommand.CLOSE);
+        else
+        {
+            stateMachine.Configure(GarageDoorState.OPENING)
+                .OnEntryAsync(SendCurrentlyOpeningEvents)
+                .Permit(GarageDoorCommand.COMPLETE, GarageDoorState.OPENED)
+                .Ignore(GarageDoorCommand.SET_ACTIVE)
+                .Ignore(GarageDoorCommand.OPEN)
+                .Ignore(GarageDoorCommand.CLOSE);
+        }
 
         stateMachine.Configure(GarageDoorState.CLOSED)
             .OnEntryAsync(CompleteGarageDoorActivity)

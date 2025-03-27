@@ -24,7 +24,7 @@ public class FanServiceTests
         optionsMock = new Mock<IOptions<ApplicationConfig>>();
         var loggerMock = new Mock<ILogger>();
         fanFactoryMock = new Mock<IFanFactory>();
-        fanService = new FanService(optionsMock.Object, loggerMock.Object, fanFactoryMock.Object);
+        fanService = new FanService(optionsMock.Object, (ILogger<IFanService>)loggerMock.Object, fanFactoryMock.Object);
     }
 
     [Fact]
