@@ -27,6 +27,6 @@ internal class AccessSensorEventHandler(ILogger<IAccessSensorEventHandler> logge
             return;
         }
         // 22 the moment it can't detect the other side. 23 when it detects it.
-        await (accessSensorService[name]?.HandleContactChange(payload.value == 23) ?? Task.CompletedTask);
+        await (accessSensorService[name]?.HandleContactChange(payload.Value == 23) ?? Task.CompletedTask);
     }
 }

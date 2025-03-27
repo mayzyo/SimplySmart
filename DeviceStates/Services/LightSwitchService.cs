@@ -25,7 +25,7 @@ internal class LightSwitchService(IOptions<ApplicationConfig> options, ILogger<I
         {
             if (TryGetLightSwitch(key, out Core.Models.LightSwitch? lightSwitch) && lightSwitch != null)
             {
-                if(lightSwitch.isDimmer == true)
+                if(lightSwitch.IsDimmer == true)
                 {
                     return lightSwitchFactory.CreateDimmerLightSwitch(lightSwitch);
                 } else
@@ -48,7 +48,7 @@ internal class LightSwitchService(IOptions<ApplicationConfig> options, ILogger<I
     {
         foreach (var lightSwitch in GetAllLightSwitch())
         {
-            if (lightSwitch.isDimmer == true)
+            if (lightSwitch.IsDimmer == true)
             {
                 await lightSwitchFactory.CreateDimmerLightSwitch(lightSwitch).Publish();
             }
@@ -70,7 +70,7 @@ internal class LightSwitchService(IOptions<ApplicationConfig> options, ILogger<I
         {
             ILightSwitch lightSwitch;
 
-            if (lightSwitchConfig.isDimmer == true)
+            if (lightSwitchConfig.IsDimmer == true)
             {
                 lightSwitch = lightSwitchFactory.CreateDimmerLightSwitch(lightSwitchConfig);
             }
@@ -107,45 +107,45 @@ internal class LightSwitchService(IOptions<ApplicationConfig> options, ILogger<I
 
     bool TryGetLightSwitch(string key, out Core.Models.LightSwitch? lightSwitch)
     {
-        if (options.Value.lightSwitches is null)
+        if (options.Value.LightSwitches is null)
         {
             lightSwitch = null;
             return false;
         }
 
-        lightSwitch = options.Value.lightSwitches.Where(e => e.name == key).FirstOrDefault();
+        lightSwitch = options.Value.LightSwitches.Where(e => e.Name == key).FirstOrDefault();
         return true;
     }
 
     bool TryGetPowerSwitch(string key, out Core.Models.PowerSwitch? powerSwitch)
     {
-        if (options.Value.powerSwitches is null)
+        if (options.Value.PowerSwitches is null)
         {
             powerSwitch = null;
             return false;
         }
 
-        powerSwitch = options.Value.powerSwitches.Where(e => e.name == key).FirstOrDefault();
+        powerSwitch = options.Value.PowerSwitches.Where(e => e.Name == key).FirstOrDefault();
         return true;
     }
 
     IEnumerable<Core.Models.LightSwitch> GetAllLightSwitch()
     {
-        if (options.Value.lightSwitches == null)
+        if (options.Value.LightSwitches == null)
         {
             return [];
         }
 
-        return options.Value.lightSwitches;
+        return options.Value.LightSwitches;
     }
 
     IEnumerable<Core.Models.PowerSwitch> GetAllPowerSwitch()
     {
-        if (options.Value.powerSwitches == null)
+        if (options.Value.PowerSwitches == null)
         {
             return [];
         }
 
-        return options.Value.powerSwitches.Where(e => e.type == "light");
+        return options.Value.PowerSwitches.Where(e => e.Type == "light");
     }
 }

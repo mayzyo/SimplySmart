@@ -27,6 +27,6 @@ internal class MotionSensorEventHandler(ILogger<IMotionSensorEventHandler> logge
             return;
         }
 
-        areaOccupantService[name]?.SetMoving(payload.value != 0);
+        areaOccupantService[name]?.SetMoving(payload.Value != 0);
     }
 }

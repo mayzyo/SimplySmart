@@ -32,8 +32,8 @@ public class AreaOccupantServiceTests
     {
         // Arrange
         var key = "areaOccupant1";
-        var camera = new Camera { name = key };
-        optionsMock.Setup(x => x.Value.cameras).Returns([camera]);
+        var camera = new Camera { Name = key };
+        optionsMock.Setup(x => x.Value.Cameras).Returns([camera]);
         var areaOccupant = new Mock<IAreaOccupant>();
         areaOccupantFactoryMock.Setup(x => x.CreateAreaOccupant(camera)).Returns(areaOccupant.Object);
 
@@ -49,7 +49,7 @@ public class AreaOccupantServiceTests
     {
         // Arrange
         var key = "invalidKey";
-        optionsMock.Setup(x => x.Value.cameras).Returns([]);
+        optionsMock.Setup(x => x.Value.Cameras).Returns([]);
 
         // Act
         var result = areaOccupantService[key];

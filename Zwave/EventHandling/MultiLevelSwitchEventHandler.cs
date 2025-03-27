@@ -28,9 +28,9 @@ internal class MultiLevelSwitchEventHandler(ILogger<MultiLevelSwitchEventHandler
             logger.LogError("message not in JSON format.");
             return;
         }
-        payload.value = PadValueToHundred(payload.value);
+        payload.Value = PadValueToHundred(payload.Value);
 
-        await (multiLevelSwitchService[name]?.SetCurrentLevel(payload.value) ?? Task.CompletedTask);
+        await (multiLevelSwitchService[name]?.SetCurrentLevel(payload.Value) ?? Task.CompletedTask);
     }
 
     // Zwave Multilevel Switch only goes up to 99 (0 - 99), we want 100 for compatibility.

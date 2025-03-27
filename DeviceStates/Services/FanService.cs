@@ -43,23 +43,23 @@ internal class FanService(IOptions<ApplicationConfig> options, ILogger<IFanServi
 
     bool TryGetPowerSwitch(string key, out PowerSwitch? powerSwitch)
     {
-        if(options.Value.powerSwitches == null)
+        if(options.Value.PowerSwitches == null)
         {
             powerSwitch = null;
             return false;
         }
 
-        powerSwitch = options.Value.powerSwitches.Where(e => e.name == key).FirstOrDefault();
+        powerSwitch = options.Value.PowerSwitches.Where(e => e.Name == key).FirstOrDefault();
         return true;
     }
 
     IEnumerable<PowerSwitch> GetAllPowerSwitch()
     {
-        if (options.Value.powerSwitches == null)
+        if (options.Value.PowerSwitches == null)
         {
             return [];
         }
 
-        return options.Value.powerSwitches.Where(e => e.type == "fan");
+        return options.Value.PowerSwitches.Where(e => e.Type == "fan");
     }
 }

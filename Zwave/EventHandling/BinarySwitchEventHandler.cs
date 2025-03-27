@@ -27,6 +27,6 @@ internal class BinarySwitchEventHandler(ILogger<IBinarySwitchEventHandler> logge
             return;
         }
 
-        await (binarySwitchService[name]?.SetCurrentValue(payload.value) ?? Task.CompletedTask);
+        await (binarySwitchService[name]?.SetCurrentValue(payload.Value) ?? Task.CompletedTask);
     }
 }

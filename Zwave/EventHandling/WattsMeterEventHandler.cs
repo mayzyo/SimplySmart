@@ -27,7 +27,7 @@ internal class WattsMeterEventHandler(ILogger<IWattsMeterEventHandler> logger, I
             return;
         }
 
-        await (wattsMeterService[name]?.HandleWattage(payload.value) ?? Task.CompletedTask);
+        await (wattsMeterService[name]?.HandleWattage(payload.Value) ?? Task.CompletedTask);
     }
 }
 

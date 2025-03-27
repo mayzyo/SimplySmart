@@ -32,8 +32,8 @@ public class GarageDoorServiceTests
     {
         // Arrange
         var key = "garageDoor1";
-        var smartImplant = new SmartImplant { name = key };
-        optionsMock.Setup(x => x.Value.smartImplants).Returns([smartImplant]);
+        var smartImplant = new SmartImplant { Name = key };
+        optionsMock.Setup(x => x.Value.SmartImplants).Returns([smartImplant]);
         var garageDoor = new Mock<IGarageDoor>();
         garageDoorFactoryMock.Setup(x => x.CreateGarageDoor(smartImplant)).Returns(garageDoor.Object);
 
@@ -49,7 +49,7 @@ public class GarageDoorServiceTests
     {
         // Arrange
         var key = "invalidKey";
-        optionsMock.Setup(x => x.Value.powerSwitches).Returns([]);
+        optionsMock.Setup(x => x.Value.PowerSwitches).Returns([]);
 
         // Act
         var result = garageDoorService[key];
@@ -64,15 +64,15 @@ public class GarageDoorServiceTests
         // Arrange
         var smartImplants = new[]
         {
-            new SmartImplant { name = "garageDoor1", type = "garageDoor" },
-            new SmartImplant { name = "garageDoor2", type = "garageDoor" }
+            new SmartImplant { Name = "garageDoor1", Type = "garageDoor" },
+            new SmartImplant { Name = "garageDoor2", Type = "garageDoor" }
         }.ToList();
         var garageDoors = new[]
         {
             new Mock<IGarageDoor>(),
             new Mock<IGarageDoor>()
         };
-        optionsMock.Setup(x => x.Value.smartImplants).Returns(smartImplants);
+        optionsMock.Setup(x => x.Value.SmartImplants).Returns(smartImplants);
         garageDoorFactoryMock.Setup(x => x.CreateGarageDoor(smartImplants[0])).Returns(garageDoors[0].Object);
         garageDoorFactoryMock.Setup(x => x.CreateGarageDoor(smartImplants[1])).Returns(garageDoors[1].Object);
 
@@ -88,7 +88,7 @@ public class GarageDoorServiceTests
     public async Task PublishAll_WithoutFans_DoesNotPublish()
     {
         // Arrange
-        optionsMock.Setup(x => x.Value.powerSwitches).Returns([]);
+        optionsMock.Setup(x => x.Value.PowerSwitches).Returns([]);
 
         // Act
         await garageDoorService.PublishAll();

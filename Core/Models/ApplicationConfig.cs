@@ -7,94 +7,94 @@ namespace SimplySmart.Core.Models;
 
 public class ApplicationConfig
 {
-    public string version { get; set; }
+    public required string Version { get; set; }
 
-    public virtual List<Camera> cameras { get; set; }
+    public virtual List<Camera>? Cameras { get; set; }
 
-    public virtual List<LightSwitch> lightSwitches { get; set; }
+    public virtual List<LightSwitch>? LightSwitches { get; set; }
 
-    public virtual List<SmartImplant> smartImplants { get; set; }
+    public virtual List<SmartImplant>? SmartImplants { get; set; }
 
-    public virtual List<Fob> fobs { get; set; }
+    public virtual List<Fob>? Fobs { get; set; }
 
-    public virtual List<MultiSensor> multiSensors { get; set; }
+    public virtual List<MultiSensor>? MultiSensors { get; set; }
 
-    public virtual List<PowerSwitch> powerSwitches { get; set; }
+    public virtual List<PowerSwitch>? PowerSwitches { get; set; }
 
-    public virtual List<DoorWindowSensor> doorWindowSensors { get; set; }
+    public virtual List<DoorWindowSensor>? DoorWindowSensors { get; set; }
 }
 
 public class Camera
 {
-    public string name { get; set; }
+    public required string Name { get; set; }
 
-    public string? lightSwitch { get; set; }
+    public string? LightSwitch { get; set; }
 
-    public bool isSurveillance { get; set; }
+    public bool IsSurveillance { get; set; }
 }
 
 public class LightSwitch
 {
-    public string name { get; set; }
+    public required string Name { get; set; }
 
-    public bool? isDimmer { get; set; }
+    public bool? IsDimmer { get; set; }
 }
 
 public class SmartImplant
 {
-    public string name { get; set; }
+    public required string Name { get; set; }
 
-    public string type { get; set; }
+    public required string Type { get; set; }
 
     // If type is garageDoor
-    public bool? closeDetect { get; set; }
+    public bool? CloseDetect { get; set; }
 
-    public bool? openDetect { get; set; }
+    public bool? OpenDetect { get; set; }
 }
 
 public class Fob
 {
-    public string name { get; set; }
+    public required string Name { get; set; }
 
-    public List<FobButton> fobButtons { get; set; }
+    public required List<FobButton> FobButtons { get; set; }
 }
 
 public class FobButton
 {
-    public string name { get; set; }
+    public required string Name { get; set; }
 
-    public string command { get; set; }
+    public required string Command { get; set; }
 }
 
 // Includes trisensor. We'll use boolean to determine if it has certain capability, similar to isDimmer.
 public class MultiSensor
 {
-    public string name { get; set; }
+    public required string Name { get; set; }
 
-    public string? lightSwitch { get; set; }
+    public string? LightSwitch { get; set; }
 }
 
 public class PowerSwitch
 {
-    public string name { get; set; }
+    public required string Name { get; set; }
 
-    public string? type { get; set; }
+    public string? Type { get; set; }
     // If type is sensor
-    public WattsSensor? wattsSensor { get; set; }
+    public WattsSensor? WattsSensor { get; set; }
 }
 
 public class WattsSensor
 {
-    public int threshold { get; set; }
+    public int Threshold { get; set; }
 
-    required public string type { get; set; }
+    public required string Type { get; set; }
 
-    public string? lightSwitch { get; set; }
+    public string? LightSwitch { get; set; }
 }
 
 public class DoorWindowSensor
 {
-    public string name { get; set; }
+    public required string Name { get; set; }
 
-    public string? garageDoor { get; set; }
+    public string? GarageDoor { get; set; }
 }

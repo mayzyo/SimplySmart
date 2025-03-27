@@ -35,7 +35,7 @@ internal class BinarySwitchService(
 
             if (TryGetPowerSwitch(key, out PowerSwitch? powerSwitch) && powerSwitch != null)
             {
-                if (powerSwitch.type == "fan")
+                if (powerSwitch.Type == "fan")
                 {
                     return fanFactory.CreateFan(powerSwitch);
                 }
@@ -44,7 +44,7 @@ internal class BinarySwitchService(
 
             if (TryGetSmartImplant(key, out SmartImplant? smartImplant) && smartImplant != null)
             {
-                if (smartImplant.type == "garageDoor")
+                if (smartImplant.Type == "garageDoor")
                 {
                     return garageDoorFactory.CreateGarageDoor(smartImplant);
                 }
@@ -57,37 +57,37 @@ internal class BinarySwitchService(
 
     bool TryGetLightSwitch(string key, out LightSwitch? lightSwitch)
     {
-        if (options.Value.lightSwitches is null)
+        if (options.Value.LightSwitches is null)
         {
             lightSwitch = null;
             return false;
         }
 
-        lightSwitch = options.Value.lightSwitches.Where(e => e.name == key && e.isDimmer == null).FirstOrDefault();
+        lightSwitch = options.Value.LightSwitches.Where(e => e.Name == key && e.IsDimmer == null).FirstOrDefault();
         return true;
     }
 
     bool TryGetPowerSwitch(string key, out PowerSwitch? powerSwitch)
     {
-        if (options.Value.powerSwitches is null)
+        if (options.Value.PowerSwitches is null)
         {
             powerSwitch = null;
             return false;
         }
 
-        powerSwitch = options.Value.powerSwitches.Where(e => e.name == key).FirstOrDefault();
+        powerSwitch = options.Value.PowerSwitches.Where(e => e.Name == key).FirstOrDefault();
         return true;
     }
 
     bool TryGetSmartImplant(string key, out SmartImplant? smartImplant)
     {
-        if (options.Value.smartImplants == null)
+        if (options.Value.SmartImplants == null)
         {
             smartImplant = null;
             return false;
         }
 
-        smartImplant = options.Value.smartImplants.Where(e => e.name == key).FirstOrDefault();
+        smartImplant = options.Value.SmartImplants.Where(e => e.Name == key).FirstOrDefault();
         return true;
     }
 }

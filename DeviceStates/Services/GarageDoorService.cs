@@ -43,23 +43,23 @@ internal class GarageDoorService(IOptions<ApplicationConfig> options, ILogger<IG
 
     bool TryGetSmartImplant(string key, out SmartImplant? smartImplant)
     {
-        if (options.Value.smartImplants == null)
+        if (options.Value.SmartImplants == null)
         {
             smartImplant = null;
             return false;
         }
 
-        smartImplant = options.Value.smartImplants.Where(e => e.name == key).FirstOrDefault();
+        smartImplant = options.Value.SmartImplants.Where(e => e.Name == key).FirstOrDefault();
         return true;
     }
 
     IEnumerable<SmartImplant> GetAllSmartImplant()
     {
-        if (options.Value.smartImplants == null)
+        if (options.Value.SmartImplants == null)
         {
             return [];
         }
 
-        return options.Value.smartImplants.Where(e => e.type == "garageDoor");
+        return options.Value.SmartImplants.Where(e => e.Type == "garageDoor");
     }
 }

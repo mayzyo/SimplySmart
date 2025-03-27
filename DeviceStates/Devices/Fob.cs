@@ -24,7 +24,7 @@ public class Fob : IFob
 
         foreach (var fobButton in fobButtons)
         {
-            buttonMapping.Add(fobButton.name, fobButton.command);
+            buttonMapping.Add(fobButton.Name, fobButton.Command);
         }
     }
 

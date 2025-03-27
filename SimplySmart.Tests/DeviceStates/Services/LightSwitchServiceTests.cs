@@ -32,8 +32,8 @@ public class LightSwitchServiceTests
     {
         // Arrange
         var key = "light1";
-        var lightSwitch = new SimplySmart.Core.Models.LightSwitch { name = key, isDimmer = false, stayOn = 14000 };
-        optionsMock.Setup(x => x.Value.lightSwitches).Returns([lightSwitch]);
+        var lightSwitch = new SimplySmart.Core.Models.LightSwitch { Name = key, IsDimmer = false, stayOn = 14000 };
+        optionsMock.Setup(x => x.Value.LightSwitches).Returns([lightSwitch]);
         var expectedLightSwitch = new Mock<ILightSwitch>();
         lightSwitchFactoryMock.Setup(x => x.CreateLightSwitch(lightSwitch, lightSwitch.stayOn)).Returns(expectedLightSwitch.Object);
 
@@ -49,8 +49,8 @@ public class LightSwitchServiceTests
     {
         // Arrange
         var key = "dimmer1";
-        var lightSwitch = new SimplySmart.Core.Models.LightSwitch { name = key, isDimmer = true, stayOn = 14000 };
-        optionsMock.Setup(x => x.Value.lightSwitches).Returns([lightSwitch]);
+        var lightSwitch = new SimplySmart.Core.Models.LightSwitch { Name = key, IsDimmer = true, stayOn = 14000 };
+        optionsMock.Setup(x => x.Value.LightSwitches).Returns([lightSwitch]);
         var expectedLightSwitch = new Mock<IDimmerLightSwitch>();
         lightSwitchFactoryMock.Setup(x => x.CreateDimmerLightSwitch(lightSwitch, lightSwitch.stayOn)).Returns(expectedLightSwitch.Object);
 
@@ -66,8 +66,8 @@ public class LightSwitchServiceTests
     {
         // Arrange
         var key = "power1";
-        var powerSwitch = new PowerSwitch { name = key };
-        optionsMock.Setup(x => x.Value.powerSwitches).Returns([powerSwitch]);
+        var powerSwitch = new PowerSwitch { Name = key };
+        optionsMock.Setup(x => x.Value.PowerSwitches).Returns([powerSwitch]);
         var expectedLightSwitch = new Mock<ILightSwitch>();
         lightSwitchFactoryMock.Setup(x => x.CreateLightSwitch(powerSwitch, null)).Returns(expectedLightSwitch.Object);
 
@@ -97,13 +97,13 @@ public class LightSwitchServiceTests
     public async Task PublishAll_WithLightSwitchesAndPowerSwitches_PublishesAllSwitches()
     {
         // Arrange
-        var lightSwitch1 = new SimplySmart.Core.Models.LightSwitch { name = "light1", isDimmer = false, stayOn = 13000 };
-        var lightSwitch2 = new SimplySmart.Core.Models.LightSwitch { name = "dimmer1", isDimmer = true, stayOn = 14000 };
-        var powerSwitch1 = new PowerSwitch { name = "power1", type = "light" };
+        var lightSwitch1 = new SimplySmart.Core.Models.LightSwitch { Name = "light1", IsDimmer = false, stayOn = 13000 };
+        var lightSwitch2 = new SimplySmart.Core.Models.LightSwitch { Name = "dimmer1", IsDimmer = true, stayOn = 14000 };
+        var powerSwitch1 = new PowerSwitch { Name = "power1", Type = "light" };
         var applicationConfig = new ApplicationConfig
         {
-            lightSwitches = [lightSwitch1, lightSwitch2],
-            powerSwitches = [powerSwitch1]
+            LightSwitches = [lightSwitch1, lightSwitch2],
+            PowerSwitches = [powerSwitch1]
         };
         optionsMock.Setup(x => x.Value).Returns(applicationConfig);
         var lightSwitchMock1 = new Mock<ILightSwitch>();
@@ -126,13 +126,13 @@ public class LightSwitchServiceTests
     public void SetAllToAuto_WithTrueCommand_EnablesAutoOnAllSwitches()
     {
         // Arrange
-        var lightSwitch1 = new SimplySmart.Core.Models.LightSwitch { name = "light1", isDimmer = false, stayOn = 13000 };
-        var lightSwitch2 = new SimplySmart.Core.Models.LightSwitch { name = "dimmer1", isDimmer = true, stayOn = 14000 };
-        var powerSwitch1 = new PowerSwitch { name = "power1", type = "light" };
+        var lightSwitch1 = new SimplySmart.Core.Models.LightSwitch { Name = "light1", IsDimmer = false, stayOn = 13000 };
+        var lightSwitch2 = new SimplySmart.Core.Models.LightSwitch { Name = "dimmer1", IsDimmer = true, stayOn = 14000 };
+        var powerSwitch1 = new PowerSwitch { Name = "power1", Type = "light" };
         var applicationConfig = new ApplicationConfig
         {
-            lightSwitches = [lightSwitch1, lightSwitch2],
-            powerSwitches = [powerSwitch1]
+            LightSwitches = [lightSwitch1, lightSwitch2],
+            PowerSwitches = [powerSwitch1]
         };
         optionsMock.Setup(x => x.Value).Returns(applicationConfig);
         var lightSwitchMock1 = new Mock<ILightSwitch>();
@@ -155,13 +155,13 @@ public class LightSwitchServiceTests
     public void SetAllToAuto_WithFalseCommand_DisablesAutoOnAllSwitches()
     {
         // Arrange
-        var lightSwitch1 = new SimplySmart.Core.Models.LightSwitch { name = "light1", isDimmer = false, stayOn = 13000 };
-        var lightSwitch2 = new SimplySmart.Core.Models.LightSwitch { name = "dimmer1", isDimmer = true, stayOn = 14000 };
-        var powerSwitch1 = new PowerSwitch { name = "power1", type = "light" };
+        var lightSwitch1 = new SimplySmart.Core.Models.LightSwitch { Name = "light1", IsDimmer = false, stayOn = 13000 };
+        var lightSwitch2 = new SimplySmart.Core.Models.LightSwitch { Name = "dimmer1", IsDimmer = true, stayOn = 14000 };
+        var powerSwitch1 = new PowerSwitch { Name = "power1", Type = "light" };
         var applicationConfig = new ApplicationConfig
         {
-            lightSwitches = [lightSwitch1, lightSwitch2],
-            powerSwitches = [powerSwitch1]
+            LightSwitches = [lightSwitch1, lightSwitch2],
+            PowerSwitches = [powerSwitch1]
         };
         optionsMock.Setup(x => x.Value).Returns(applicationConfig);
         var lightSwitchMock1 = new Mock<ILightSwitch>();

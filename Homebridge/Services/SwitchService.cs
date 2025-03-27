@@ -35,7 +35,7 @@ internal class SwitchService(
 
             if (TryGetSmartImplant(key, out SmartImplant? smartImplant) && smartImplant != null)
             {
-                if (smartImplant.type == "garageDoor")
+                if (smartImplant.Type == "garageDoor")
                 {
                     return garageDoorFactory.CreateGarageDoor(smartImplant);
                 }
@@ -48,13 +48,13 @@ internal class SwitchService(
 
     bool TryGetSmartImplant(string key, out SmartImplant? smartImplant)
     {
-        if (options.Value.smartImplants == null)
+        if (options.Value.SmartImplants == null)
         {
             smartImplant = null;
             return false;
         }
 
-        smartImplant = options.Value.smartImplants.Where(e => e.name == key).FirstOrDefault();
+        smartImplant = options.Value.SmartImplants.Where(e => e.Name == key).FirstOrDefault();
         return true;
     }
 }

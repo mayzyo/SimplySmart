@@ -28,17 +28,17 @@ internal class WattsMeterService(
         {
             if (TryGetPowerSwitch(key, out WattsSensor? voltageSensor) && voltageSensor != null)
             {
-                if (voltageSensor.lightSwitch != null)
+                if (voltageSensor.LightSwitch != null)
                 {
-                    var binarySwitch = lightSwitchService[voltageSensor.lightSwitch];
+                    var binarySwitch = lightSwitchService[voltageSensor.LightSwitch];
                     if (binarySwitch != null)
                     {
-                        if (voltageSensor.type == "over")
+                        if (voltageSensor.Type == "over")
                         {
                             return new OverWattageSwitch
                             {
                                 BinarySwitch = binarySwitch,
-                                Threshold = voltageSensor.threshold
+                                Threshold = voltageSensor.Threshold
                             };
                         }
                         else
@@ -46,7 +46,7 @@ internal class WattsMeterService(
                             return new UnderWattageSwitch
                             {
                                 BinarySwitch = binarySwitch,
-                                Threshold = voltageSensor.threshold
+                                Threshold = voltageSensor.Threshold
                             };
                         }
                     }
@@ -60,14 +60,14 @@ internal class WattsMeterService(
 
     bool TryGetPowerSwitch(string key, out WattsSensor? voltageSensor)
     {
-        if (options.Value.powerSwitches is null)
+        if (options.Value.PowerSwitches is null)
         {
             voltageSensor = null;
             return false;
         }
 
-        voltageSensor = options.Value.powerSwitches
-            .FirstOrDefault(e => e.name == key && e.wattsSensor != null)?.wattsSensor;
+        voltageSensor = options.Value.PowerSwitches
+            .FirstOrDefault(e => e.Name == key && e.WattsSensor != null)?.WattsSensor;
         return true;
     }
 }

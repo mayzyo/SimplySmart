@@ -23,6 +23,6 @@ internal class FanFactory(
 ) : IFanFactory
 {
     public IFan CreateFan(PowerSwitch config) =>
-        new Fan(stateStore, homebridgeEventSender, zwaveEventSender, config.name)
+        new Fan(stateStore, homebridgeEventSender, zwaveEventSender, config.Name)
             .Connect();
 }

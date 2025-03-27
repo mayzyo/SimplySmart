@@ -38,7 +38,7 @@ public class FrigateEventHandler(
             return;
         }
 
-        if (options.Value.cameras == null)
+        if (options.Value.Cameras == null)
         {
             return;
         }
@@ -72,7 +72,7 @@ public class FrigateEventHandler(
             {
                 await passthroughEventSender.AlertEvent(message);
             }
-            else if (options.Value.cameras.Where(e => e.isSurveillance).Any(e => e.name == frigateEvent.before?.camera) == true)
+            else if (options.Value.Cameras.Where(e => e.IsSurveillance).Any(e => e.Name == frigateEvent.before?.camera) == true)
             {
                 if (houseService.Security.State == HouseSecurityState.NIGHT)
                 {

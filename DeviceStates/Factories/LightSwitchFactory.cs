@@ -27,14 +27,14 @@ internal class LightSwitchFactory(
 ) : ILightSwitchFactory
 {
     public ILightSwitch CreateLightSwitch(Core.Models.LightSwitch lightSwitch) =>
-        new Devices.LightSwitch(stateStore, schedulerFactory, homebridgeEventSender, zwaveEventSender, lightSwitch.name)
+        new Devices.LightSwitch(stateStore, schedulerFactory, homebridgeEventSender, zwaveEventSender, lightSwitch.Name)
             .Connect();
 
     public ILightSwitch CreateLightSwitch(PowerSwitch powerSwitch) =>
-        new Devices.LightSwitch(stateStore, schedulerFactory, homebridgeEventSender, zwaveEventSender, powerSwitch.name)
+        new Devices.LightSwitch(stateStore, schedulerFactory, homebridgeEventSender, zwaveEventSender, powerSwitch.Name)
             .Connect();
 
     public IDimmerLightSwitch CreateDimmerLightSwitch(Core.Models.LightSwitch lightSwitch) =>
-        new DimmerLightSwitch(stateStore, schedulerFactory, homebridgeEventSender, zwaveEventSender, lightSwitch.name)
+        new DimmerLightSwitch(stateStore, schedulerFactory, homebridgeEventSender, zwaveEventSender, lightSwitch.Name)
             .Connect();
 }

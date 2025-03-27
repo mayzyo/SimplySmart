@@ -38,13 +38,13 @@ internal class MultiLevelSwitchService(
 
     bool TryGetLightSwitch(string key, out LightSwitch? lightSwitch)
     {
-        if (options.Value.lightSwitches is null)
+        if (options.Value.LightSwitches is null)
         {
             lightSwitch = null;
             return false;
         }
 
-        lightSwitch = options.Value.lightSwitches.Where(e => e.name == key && e.isDimmer == true).FirstOrDefault();
+        lightSwitch = options.Value.LightSwitches.Where(e => e.Name == key && e.IsDimmer == true).FirstOrDefault();
         return true;
     }
 }

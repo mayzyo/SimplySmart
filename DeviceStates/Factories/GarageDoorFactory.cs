@@ -26,6 +26,6 @@ internal class GarageDoorFactory(
 ) : IGarageDoorFactory
 {
     public IGarageDoor CreateGarageDoor(SmartImplant config) => 
-        new GarageDoor(logger, stateStore, schedulerFactory, homebridgeEventSender, zwaveEventSender, frigateWebhookSender, config.name, config.closeDetect, config.openDetect)
+        new GarageDoor(logger, stateStore, schedulerFactory, homebridgeEventSender, zwaveEventSender, frigateWebhookSender, config.Name, config.CloseDetect, config.OpenDetect)
             .Connect();
 }

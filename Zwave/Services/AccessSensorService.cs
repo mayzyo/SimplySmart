@@ -28,9 +28,9 @@ internal class AccessSensorService(
         {
             if (TryGetDoorWindowSensor(key, out DoorWindowSensor? doorWindowSensor) && doorWindowSensor != null)
             {
-                if(doorWindowSensor.garageDoor != null)
+                if(doorWindowSensor.GarageDoor != null)
                 {
-                    return garageDoorService[doorWindowSensor.garageDoor];
+                    return garageDoorService[doorWindowSensor.GarageDoor];
                 }
             }
 
@@ -41,14 +41,14 @@ internal class AccessSensorService(
 
     bool TryGetDoorWindowSensor(string key, out DoorWindowSensor? doorWindowSensor)
     {
-        if (options.Value.doorWindowSensors is null)
+        if (options.Value.DoorWindowSensors is null)
         {
             doorWindowSensor = null;
             return false;
         }
 
-        doorWindowSensor = options.Value.doorWindowSensors
-            .FirstOrDefault(e => e.name == key && e.garageDoor != null);
+        doorWindowSensor = options.Value.DoorWindowSensors
+            .FirstOrDefault(e => e.Name == key && e.GarageDoor != null);
         return true;
     }
 }

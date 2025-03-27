@@ -32,8 +32,8 @@ public class FanServiceTests
     {
         // Arrange
         var key = "fan1";
-        var powerSwitch = new PowerSwitch { name = key };
-        optionsMock.Setup(x => x.Value.powerSwitches).Returns([powerSwitch]);
+        var powerSwitch = new PowerSwitch { Name = key };
+        optionsMock.Setup(x => x.Value.PowerSwitches).Returns([powerSwitch]);
         var fan = new Mock<IFan>();
         fanFactoryMock.Setup(x => x.CreateFan(powerSwitch)).Returns(fan.Object);
 
@@ -49,7 +49,7 @@ public class FanServiceTests
     {
         // Arrange
         var key = "invalidKey";
-        optionsMock.Setup(x => x.Value.powerSwitches).Returns([]);
+        optionsMock.Setup(x => x.Value.PowerSwitches).Returns([]);
 
         // Act
         var result = fanService[key];
@@ -64,15 +64,15 @@ public class FanServiceTests
         // Arrange
         var powerSwitches = new[]
         {
-            new PowerSwitch { name = "fan1", type = "fan" },
-            new PowerSwitch { name = "fan2", type = "fan" }
+            new PowerSwitch { Name = "fan1", Type = "fan" },
+            new PowerSwitch { Name = "fan2", Type = "fan" }
         }.ToList();
         var fans = new[]
         {
             new Mock<IFan>(),
             new Mock<IFan>()
         };
-        optionsMock.Setup(x => x.Value.powerSwitches).Returns(powerSwitches);
+        optionsMock.Setup(x => x.Value.PowerSwitches).Returns(powerSwitches);
         fanFactoryMock.Setup(x => x.CreateFan(powerSwitches[0])).Returns(fans[0].Object);
         fanFactoryMock.Setup(x => x.CreateFan(powerSwitches[1])).Returns(fans[1].Object);
 
@@ -88,7 +88,7 @@ public class FanServiceTests
     public async Task PublishAll_WithoutFans_DoesNotPublish()
     {
         // Arrange
-        optionsMock.Setup(x => x.Value.powerSwitches).Returns([]);
+        optionsMock.Setup(x => x.Value.PowerSwitches).Returns([]);
 
         // Act
         await fanService.PublishAll();

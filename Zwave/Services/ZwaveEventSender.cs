@@ -21,21 +21,21 @@ internal class ZwaveEventSender(IManagedMqttClient mqttClient) : IZwaveEventSend
     public async Task BinarySwitchOff(string triggerUri)
     {
         var epoch = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        var payload = JsonSerializer.Serialize(new BinarySwitch { value = false, time = epoch });
+        var payload = JsonSerializer.Serialize(new BinarySwitch { Value = false, Time = epoch });
         await mqttClient.EnqueueAsync($"zwave/{triggerUri}/targetValue/set", payload);
     }
 
     public async Task BinarySwitchOn(string triggerUri)
     {
         var epoch = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        var payload = JsonSerializer.Serialize(new BinarySwitch { value = true, time = epoch });
+        var payload = JsonSerializer.Serialize(new BinarySwitch { Value = true, Time = epoch });
         await mqttClient.EnqueueAsync($"zwave/{triggerUri}/targetValue/set", payload);
     }
 
     public async Task MultiLevelSwitchUpdate(string triggerUri, ushort brightness)
     {
         var epoch = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        var payload = JsonSerializer.Serialize(new MultilevelSwitch { value = (ushort)(brightness == 100 ? 99 : brightness), time = epoch });
+        var payload = JsonSerializer.Serialize(new MultilevelSwitch { Value = (ushort)(brightness == 100 ? 99 : brightness), Time = epoch });
         await mqttClient.EnqueueAsync($"zwave/{triggerUri}/targetValue/set", payload);
     }
 }

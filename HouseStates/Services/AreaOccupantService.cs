@@ -39,25 +39,25 @@ internal class AreaOccupantService(IOptions<ApplicationConfig> options, ILogger<
 
     bool TryGetCamera(string key, out Camera? camera)
     {
-        if (options.Value.cameras is null)
+        if (options.Value.Cameras is null)
         {
             camera = null;
             return false;
         }
 
-        camera = options.Value.cameras.Where(e => e.name == key).FirstOrDefault();
+        camera = options.Value.Cameras.Where(e => e.Name == key).FirstOrDefault();
         return true;
     }
 
     bool TryGetMultiSensor(string key, out MultiSensor? multiSensor)
     {
-        if (options.Value.multiSensors is null)
+        if (options.Value.MultiSensors is null)
         {
             multiSensor = null;
             return false;
         }
 
-        multiSensor = options.Value.multiSensors.Where(e => e.name == key).FirstOrDefault();
+        multiSensor = options.Value.MultiSensors.Where(e => e.Name == key).FirstOrDefault();
         return true;
     }
 }

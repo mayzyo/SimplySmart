@@ -40,7 +40,7 @@ internal class FobService : IFobService
     {
         this.logger = logger;
 
-        if (options.Value.fobs != null)
+        if (options.Value.Fobs != null)
         {
             Initialise(options.Value, fobFactory);
         }
@@ -48,10 +48,10 @@ internal class FobService : IFobService
 
     private void Initialise(ApplicationConfig config, IFobFactory fobFactory)
     {
-        foreach (var fobConfig in config.fobs)
+        foreach (var fobConfig in config.Fobs)
         {
-            var fob = fobFactory.CreateFob(fobConfig.fobButtons);
-            states.Add(fobConfig.name, fob);
+            var fob = fobFactory.CreateFob(fobConfig.FobButtons);
+            states.Add(fobConfig.Name, fob);
         }
 
         logger.LogInformation("Fobs loaded successfully in Fob Service");

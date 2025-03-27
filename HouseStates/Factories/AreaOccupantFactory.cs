@@ -19,31 +19,31 @@ internal class AreaOccupantFactory(IStateStore stateStorageService, ILightSwitch
 {
     public IAreaOccupant CreateAreaOccupant(Camera camera)
     {
-        if(camera.lightSwitch != null)
+        if(camera.LightSwitch != null)
         {
-            var lightSwitch = lightSwitchService[camera.lightSwitch];
+            var lightSwitch = lightSwitchService[camera.LightSwitch];
 
             if(lightSwitch != null)
             {
-                return new AreaOccupant(stateStorageService, camera.name).Connect(lightSwitch);
+                return new AreaOccupant(stateStorageService, camera.Name).Connect(lightSwitch);
             }
         }
 
-        return new AreaOccupant(stateStorageService, camera.name).Connect();
+        return new AreaOccupant(stateStorageService, camera.Name).Connect();
     }
 
     public IAreaOccupant CreateAreaOccupant(MultiSensor multisensor)
     {
-        if (multisensor.lightSwitch != null)
+        if (multisensor.LightSwitch != null)
         {
-            var lightSwitch = lightSwitchService[multisensor.lightSwitch];
+            var lightSwitch = lightSwitchService[multisensor.LightSwitch];
 
             if (lightSwitch != null)
             {
-                return new AreaOccupant(stateStorageService, multisensor.name).Connect(lightSwitch);
+                return new AreaOccupant(stateStorageService, multisensor.Name).Connect(lightSwitch);
             }
         }
 
-        return new AreaOccupant(stateStorageService, multisensor.name).Connect();
+        return new AreaOccupant(stateStorageService, multisensor.Name).Connect();
     }
 }
