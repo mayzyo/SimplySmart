@@ -30,7 +30,12 @@ public class FanTests
 
         homebridgeEventSenderMock = new Mock<IHomebridgeEventSender>();
         zwaveEventSenderMock = new Mock<IZwaveEventSender>();
-        fan = new Fan(stateStorageServiceMock.Object, "TestFan", homebridgeEventSenderMock.Object, zwaveEventSenderMock.Object);
+        fan = new Fan(
+            stateStorageServiceMock.Object,
+            homebridgeEventSenderMock.Object,
+            zwaveEventSenderMock.Object,
+            "TestFan"
+        );
         fan.Connect();
     }
 

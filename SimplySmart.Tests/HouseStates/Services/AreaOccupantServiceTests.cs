@@ -22,7 +22,7 @@ public class AreaOccupantServiceTests
     public AreaOccupantServiceTests()
     {
         optionsMock = new Mock<IOptions<ApplicationConfig>>();
-        var loggerMock = new Mock<ILogger>();
+        var loggerMock = new Mock<ILogger<IAreaOccupantService>>();
         areaOccupantFactoryMock = new Mock<IAreaOccupantFactory>();
         areaOccupantService = new AreaOccupantService(optionsMock.Object, loggerMock.Object, areaOccupantFactoryMock.Object);
     }

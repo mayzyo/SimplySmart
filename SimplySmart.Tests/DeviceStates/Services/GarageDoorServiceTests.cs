@@ -22,7 +22,7 @@ public class GarageDoorServiceTests
     public GarageDoorServiceTests()
     {
         optionsMock = new Mock<IOptions<ApplicationConfig>>();
-        var loggerMock = new Mock<ILogger>();
+        var loggerMock = new Mock<ILogger<IGarageDoorService>>();
         garageDoorFactoryMock = new Mock<IGarageDoorFactory>();
         garageDoorService = new GarageDoorService(optionsMock.Object, loggerMock.Object, garageDoorFactoryMock.Object);
     }
@@ -32,7 +32,7 @@ public class GarageDoorServiceTests
     {
         // Arrange
         var key = "garageDoor1";
-        var smartImplant = new SmartImplant { Name = key };
+        var smartImplant = new SmartImplant { Name = key, Type = "garageDoor" };
         optionsMock.Setup(x => x.Value.SmartImplants).Returns([smartImplant]);
         var garageDoor = new Mock<IGarageDoor>();
         garageDoorFactoryMock.Setup(x => x.CreateGarageDoor(smartImplant)).Returns(garageDoor.Object);

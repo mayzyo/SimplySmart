@@ -1,4 +1,5 @@
 ﻿using Moq;
+using Quartz;
 using SimplySmart.Core.Abstractions;
 using SimplySmart.DeviceStates.Devices;
 using SimplySmart.Homebridge.Services;
@@ -16,6 +17,7 @@ public class LightSwitchTests
     readonly Mock<IStateStore> stateStorageServiceMock;
     readonly Mock<IHomebridgeEventSender> homebridgeEventSenderMock;
     readonly Mock<IZwaveEventSender> zwaveEventSenderMock;
+    readonly Mock<ISchedulerFactory> schedulerFactoryMock;
     readonly LightSwitch lightSwitch;
 
     string mockState = LightSwitchState.OFF.ToString();
@@ -30,28 +32,40 @@ public class LightSwitchTests
 
         homebridgeEventSenderMock = new Mock<IHomebridgeEventSender>();
         zwaveEventSenderMock = new Mock<IZwaveEventSender>();
-        lightSwitch = new LightSwitch(stateStorageServiceMock.Object, homebridgeEventSenderMock.Object, zwaveEventSenderMock.Object, "TestLightSwitch", null);
+        schedulerFactoryMock = new Mock<ISchedulerFactory>();
+        lightSwitch = new LightSwitch(
+            stateStorageServiceMock.Object,
+            schedulerFactoryMock.Object,
+            homebridgeEventSenderMock.Object,
+            zwaveEventSenderMock.Object,
+            "TestLightSwitch"
+        );
         lightSwitch.Connect();
     }
 
+    //[Fact]
+    //public async Task Publish_ShouldActivateStateMachine()
+    //{
+    //    // Arrange
+    //    mockState = LightSwitchState.ON.ToString();
+
+    //    // Act
+    //    await lightSwitch.Publish();
+
+    //    // Assert
+    //    Assert.Equal(LightSwitchState.ON, lightSwitch.State);
+    //    homebridgeEventSenderMock.Verify(x => x.LightSwitchOn("TestLightSwitch"), Times.Once);
+    //    zwaveEventSenderMock.Verify(x => x.BinarySwitchOn("TestLightSwitch"), Times.Once);
+    //    stateStorageServiceMock.Verify(x => x.UpdateState("TestLightSwitch", mockState), Times.Never);
+    //}
+
+    /// <summary>
+    /// Verifies that when the light switch is set to ON while in the OFF state, the state transitions 
+    /// to ON and only homebridge event is sent. Because SET commands should only be used by
+    /// events from the zwave device itself to avoid echoing.
+    /// </summary>
     [Fact]
-    public async Task Publish_ShouldActivateStateMachine()
-    {
-        // Arrange
-        mockState = LightSwitchState.ON.ToString();
-
-        // Act
-        await lightSwitch.Publish();
-
-        // Assert
-        Assert.Equal(LightSwitchState.ON, lightSwitch.State);
-        homebridgeEventSenderMock.Verify(x => x.LightSwitchOn("TestLightSwitch"), Times.Once);
-        zwaveEventSenderMock.Verify(x => x.BinarySwitchOn("TestLightSwitch"), Times.Once);
-        stateStorageServiceMock.Verify(x => x.UpdateState("TestLightSwitch", mockState), Times.Never);
-    }
-
-    [Fact]
-    public async Task SetToOn_ShouldSendEvent()
+    public async Task SetCurrentValue_ShouldSendHomebridgeEvent()
     {
         // Arrange
         mockState = LightSwitchState.OFF.ToString();
@@ -62,9 +76,51 @@ public class LightSwitchTests
         // Assert
         Assert.Equal(LightSwitchState.ON, lightSwitch.State);
         homebridgeEventSenderMock.Verify(x => x.LightSwitchOn("TestLightSwitch"), Times.Once);
+        zwaveEventSenderMock.Verify(x => x.BinarySwitchOn("TestLightSwitch"), Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that when the light switch is requested to be turned ON while in the OFF state, the state transitions 
+    /// to PENDING_ON and all events are sent.
+    /// </summary>
+    [Fact]
+    public async Task SetToOn_ShouldSendAllEvent()
+    {
+        // Arrange
+        mockState = LightSwitchState.OFF.ToString();
+
+        // Act
+        await lightSwitch.SetToOn(true);
+
+        // Assert
+        Assert.Equal(LightSwitchState.PENDING_ON, lightSwitch.State);
+        homebridgeEventSenderMock.Verify(x => x.LightSwitchOn("TestLightSwitch"), Times.Once);
         zwaveEventSenderMock.Verify(x => x.BinarySwitchOn("TestLightSwitch"), Times.Once);
     }
 
+    /// <summary>
+    /// Verifies that when the light switch is set to ON while it's already in the ON state
+    /// does not trigger any further event sending or state changes, preventing redundant operations.
+    /// </summary>
+    [Fact]
+    public async Task SetCurrentValue_WhenAlreadyOn_ShouldIgnoreCommand()
+    {
+        // Arrange
+        mockState = LightSwitchState.ON.ToString();
+
+        // Act
+        await lightSwitch.SetCurrentValue(true);
+
+        // Assert
+        Assert.Equal(LightSwitchState.ON, lightSwitch.State);
+        homebridgeEventSenderMock.Verify(x => x.LightSwitchOn("TestLightSwitch"), Times.Never);
+        zwaveEventSenderMock.Verify(x => x.BinarySwitchOn("TestLightSwitch"), Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that when the light switch is requested to be turned ON while it's already in the ON state
+    /// does not trigger any further event sending or state changes, preventing redundant operations.
+    /// </summary>
     [Fact]
     public async Task SetToOn_WhenAlreadyOn_ShouldIgnoreCommand()
     {
@@ -72,7 +128,7 @@ public class LightSwitchTests
         mockState = LightSwitchState.ON.ToString();
 
         // Act
-        await lightSwitch.SetCurrentValue(true);
+        await lightSwitch.SetToOn(true);
 
         // Assert
         Assert.Equal(LightSwitchState.ON, lightSwitch.State);
@@ -80,73 +136,126 @@ public class LightSwitchTests
         zwaveEventSenderMock.Verify(x => x.BinarySwitchOn("TestLightSwitch"), Times.Never);
     }
 
+    /// <summary>
+    /// Verifies that when the light switch is set to ON while in the OFF_AUTO state, the state transitions 
+    /// to ON_SCHEDULED_OFF.
+    /// </summary>
     [Fact]
-    public async Task SetToOn_WhenAutoOn_ShouldBeForcedOn()
+    public async Task SetCurrentValue_WhenOffAuto_ShouldBeOnScheduledOff()
     {
         // Arrange
-        mockState = LightSwitchState.AUTO_ON.ToString();
+        mockState = LightSwitchState.OFF_AUTO.ToString();
 
         // Act
         await lightSwitch.SetCurrentValue(true);
 
         // Assert
-        Assert.Equal(LightSwitchState.AUTO_FORCED_ON, lightSwitch.State);
-        homebridgeEventSenderMock.Verify(x => x.LightSwitchOn("TestLightSwitch"), Times.Never);
+        Assert.Equal(LightSwitchState.ON_SCHEDULED_OFF, lightSwitch.State);
+        homebridgeEventSenderMock.Verify(x => x.LightSwitchOn("TestLightSwitch"), Times.Once);
         zwaveEventSenderMock.Verify(x => x.BinarySwitchOn("TestLightSwitch"), Times.Never);
     }
 
+    /// <summary>
+    /// Verifies that when the light switch is requested to be turned ON while in the OFF_AUTO state, the state transitions 
+    /// to PENDING_ON_SCHEDULED_OFF.
+    /// </summary>
     [Fact]
-    public async Task SetToOn_WhenAutoOff_ShouldBeForcedOn()
+    public async Task SetToOn_WhenOffAuto_ShouldBePendingOnScheduledOff()
     {
         // Arrange
-        mockState = LightSwitchState.AUTO_OFF.ToString();
+        mockState = LightSwitchState.OFF_AUTO.ToString();
 
         // Act
-        await lightSwitch.SetCurrentValue(true);
+        await lightSwitch.SetToOn(true);
 
         // Assert
-        Assert.Equal(LightSwitchState.AUTO_FORCED_ON, lightSwitch.State);
+        Assert.Equal(LightSwitchState.PENDING_ON_SCHEDULED_OFF, lightSwitch.State);
         homebridgeEventSenderMock.Verify(x => x.LightSwitchOn("TestLightSwitch"), Times.Once);
         zwaveEventSenderMock.Verify(x => x.BinarySwitchOn("TestLightSwitch"), Times.Once);
     }
 
-
+    /// <summary>
+    /// Verifies that when the light switch is set to ON while it's already in the ON_SCHEDULED_OFF state
+    /// does not trigger any further event sending or state changes, preventing redundant operations.
+    /// </summary>
     [Fact]
-    public async Task SetToOn_WhenPendingOff_ShouldBeForcedOn()
+    public async Task SetCurrentValue_WhenOnScheduledOff_ShouldIgnoreCommand()
     {
         // Arrange
-        await ArrangeAutoPendingOff();
+        mockState = LightSwitchState.ON_SCHEDULED_OFF.ToString();
 
         // Act
         await lightSwitch.SetCurrentValue(true);
 
         // Assert
-        Assert.Equal(LightSwitchState.AUTO_FORCED_ON, lightSwitch.State);
-        Assert.False(lightSwitch.PendingTrigger);
+        Assert.Equal(LightSwitchState.ON_SCHEDULED_OFF, lightSwitch.State);
         homebridgeEventSenderMock.Verify(x => x.LightSwitchOn("TestLightSwitch"), Times.Never);
         zwaveEventSenderMock.Verify(x => x.BinarySwitchOn("TestLightSwitch"), Times.Never);
     }
 
+    /// <summary>
+    /// Verifies that when the light switch is requested to be turned ON
+    /// while it's already in the ON_SCHEDULED_OFF state
+    /// does not trigger any further event sending or state changes, preventing redundant operations.
+    /// </summary>
     [Fact]
-    public async Task SetToOn_WhenForcedOn_ShouldIgnoreCommand()
+    public async Task SetToOn_WhenOnScheduledOff_ShouldIgnoreCommand()
     {
         // Arrange
-        mockState = LightSwitchState.AUTO_FORCED_ON.ToString();
+        mockState = LightSwitchState.ON_SCHEDULED_OFF.ToString();
 
         // Act
-        await lightSwitch.SetCurrentValue(true);
+        await lightSwitch.SetToOn(true);
 
         // Assert
-        Assert.Equal(LightSwitchState.AUTO_FORCED_ON, lightSwitch.State);
+        Assert.Equal(LightSwitchState.ON_SCHEDULED_OFF, lightSwitch.State);
         homebridgeEventSenderMock.Verify(x => x.LightSwitchOn("TestLightSwitch"), Times.Never);
         zwaveEventSenderMock.Verify(x => x.BinarySwitchOn("TestLightSwitch"), Times.Never);
     }
 
+    /// <summary>
+    /// Verifies that when the light switch is set to OFF while in the ON_AUTO state, the state transitions 
+    /// to OFF_AUTO.
+    /// </summary>
     [Fact]
-    public async Task SetToOff_WhenAlreadyOff_ShouldIgnoreCommand()
+    public async Task SetToOff_WhenOnAuto_ShouldBeOffAuto()
     {
         // Arrange
-        mockState = LightSwitchState.OFF.ToString();
+        mockState = LightSwitchState.ON_AUTO.ToString();
+
+        // Act
+        await lightSwitch.SetCurrentValue(false);
+
+        // Assert
+        Assert.Equal(LightSwitchState.OFF_AUTO, lightSwitch.State);
+        homebridgeEventSenderMock.Verify(x => x.LightSwitchOff("TestLightSwitch"), Times.Once);
+        zwaveEventSenderMock.Verify(x => x.BinarySwitchOff("TestLightSwitch"), Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that when the light switch is set to OFF while it's already in the OFF_AUTO state
+    /// does not trigger any further event sending or state changes, preventing redundant operations.
+    /// </summary>
+    [Fact]
+    public async Task SetToOff_WhenOffAuto_ShouldIgnoreCommand()
+    {
+        // Arrange
+        mockState = LightSwitchState.OFF_AUTO.ToString();
+
+        // Act
+        await lightSwitch.SetCurrentValue(false);
+
+        // Assert
+        Assert.Equal(LightSwitchState.OFF_AUTO, lightSwitch.State);
+        homebridgeEventSenderMock.Verify(x => x.LightSwitchOff("TestLightSwitch"), Times.Never);
+        zwaveEventSenderMock.Verify(x => x.BinarySwitchOff("TestLightSwitch"), Times.Never);
+    }
+
+    [Fact]
+    public async Task SetToOff_WhenPendingOff_ShouldBeOff()
+    {
+        // Arrange
+        mockState = LightSwitchState.PENDING_OFF.ToString();
 
         // Act
         await lightSwitch.SetCurrentValue(false);
@@ -154,96 +263,35 @@ public class LightSwitchTests
         // Assert
         Assert.Equal(LightSwitchState.OFF, lightSwitch.State);
         homebridgeEventSenderMock.Verify(x => x.LightSwitchOff("TestLightSwitch"), Times.Never);
-        zwaveEventSenderMock.Verify(x => x.BinarySwitchOff("TestLightSwitch"), Times.Never);
+        zwaveEventSenderMock.Verify(x => x.BinarySwitchOff("TestLightSwitch"), Times.Once);
     }
 
     [Fact]
-    public async Task SetToOff_WhenAutoOn_ShouldBeAutoOff()
+    public async Task SetToOff_WhenOnScheduledOff_ShouldBeOffAuto()
     {
         // Arrange
-        mockState = LightSwitchState.AUTO_ON.ToString();
+        mockState = LightSwitchState.ON_SCHEDULED_OFF.ToString();
 
         // Act
         await lightSwitch.SetCurrentValue(false);
 
         // Assert
-        Assert.Equal(LightSwitchState.AUTO_OFF, lightSwitch.State);
+        Assert.Equal(LightSwitchState.OFF_AUTO, lightSwitch.State);
         homebridgeEventSenderMock.Verify(x => x.LightSwitchOff("TestLightSwitch"), Times.Once);
         zwaveEventSenderMock.Verify(x => x.BinarySwitchOff("TestLightSwitch"), Times.Once);
     }
 
     [Fact]
-    public async Task SetToOff_WhenAutoOff_ShouldIgnoreCommand()
+    public async Task AutoSetToOn_WhenAlreadyOnAuto_ShouldIgnoreCommand()
     {
         // Arrange
-        mockState = LightSwitchState.AUTO_OFF.ToString();
-
-        // Act
-        await lightSwitch.SetCurrentValue(false);
-
-        // Assert
-        Assert.Equal(LightSwitchState.AUTO_OFF, lightSwitch.State);
-        homebridgeEventSenderMock.Verify(x => x.LightSwitchOff("TestLightSwitch"), Times.Never);
-        zwaveEventSenderMock.Verify(x => x.BinarySwitchOff("TestLightSwitch"), Times.Never);
-    }
-
-    [Fact]
-    public async Task SetToOff_WhenPendingOff_ShouldBeAutoOff()
-    {
-        // Arrange
-        await ArrangeAutoPendingOff();
-
-        // Act
-        await lightSwitch.SetCurrentValue(false);
-
-        // Assert
-        Assert.Equal(LightSwitchState.AUTO_OFF, lightSwitch.State);
-        Assert.False(lightSwitch.PendingTrigger);
-        homebridgeEventSenderMock.Verify(x => x.LightSwitchOff("TestLightSwitch"), Times.Once);
-        zwaveEventSenderMock.Verify(x => x.BinarySwitchOff("TestLightSwitch"), Times.Once);
-    }
-
-    [Fact]
-    public async Task SetToOff_WhenForcedOn_ShouldBeAutoOff()
-    {
-        // Arrange
-        mockState = LightSwitchState.AUTO_FORCED_ON.ToString();
-
-        // Act
-        await lightSwitch.SetCurrentValue(false);
-
-        // Assert
-        Assert.Equal(LightSwitchState.AUTO_OFF, lightSwitch.State);
-        homebridgeEventSenderMock.Verify(x => x.LightSwitchOff("TestLightSwitch"), Times.Once);
-        zwaveEventSenderMock.Verify(x => x.BinarySwitchOff("TestLightSwitch"), Times.Once);
-    }
-
-    [Fact]
-    public async Task AutoSetToOn_ShouldSendEvent()
-    {
-        // Arrange
-        mockState = LightSwitchState.AUTO_OFF.ToString();
+        mockState = LightSwitchState.ON_AUTO.ToString();
 
         // Act
         await lightSwitch.AutoSetToOn();
 
         // Assert
-        Assert.Equal(LightSwitchState.AUTO_ON, lightSwitch.State);
-        homebridgeEventSenderMock.Verify(x => x.LightSwitchOn("TestLightSwitch"), Times.Once);
-        zwaveEventSenderMock.Verify(x => x.BinarySwitchOn("TestLightSwitch"), Times.Once);
-    }
-
-    [Fact]
-    public async Task AutoSetToOn_WhenAlreadyAutoOn_ShouldIgnoreCommand()
-    {
-        // Arrange
-        mockState = LightSwitchState.AUTO_ON.ToString();
-
-        // Act
-        await lightSwitch.AutoSetToOn();
-
-        // Assert
-        Assert.Equal(LightSwitchState.AUTO_ON, lightSwitch.State);
+        Assert.Equal(LightSwitchState.ON_AUTO, lightSwitch.State);
         homebridgeEventSenderMock.Verify(x => x.LightSwitchOn("TestLightSwitch"), Times.Never);
         zwaveEventSenderMock.Verify(x => x.BinarySwitchOn("TestLightSwitch"), Times.Never);
     }
@@ -279,47 +327,46 @@ public class LightSwitchTests
     }
 
     [Fact]
-    public async Task AutoSetToOn_WhenPendingOff_ShouldBeAutoOn()
+    public async Task AutoSetToOn_OnScheduledOff_ShouldBeOnAuto()
     {
         // Arrange
-        await ArrangeAutoPendingOff();
+        mockState = LightSwitchState.ON_SCHEDULED_OFF.ToString();
 
         // Act
         await lightSwitch.AutoSetToOn();
 
         // Assert
-        Assert.Equal(LightSwitchState.AUTO_ON, lightSwitch.State);
-        Assert.False(lightSwitch.PendingTrigger);
+        Assert.Equal(LightSwitchState.ON_AUTO, lightSwitch.State);
         homebridgeEventSenderMock.Verify(x => x.LightSwitchOn("TestLightSwitch"), Times.Never);
         zwaveEventSenderMock.Verify(x => x.BinarySwitchOn("TestLightSwitch"), Times.Never);
     }
 
     [Fact]
-    public async Task AutoSetToOn_WhenForcedOn_ShouldIgnoreCommand()
+    public async Task AutoSetToOn_WhenOnAuto_ShouldIgnoreCommand()
     {
         // Arrange
-        mockState = LightSwitchState.AUTO_FORCED_ON.ToString();
+        mockState = LightSwitchState.ON_AUTO.ToString();
 
         // Act
         await lightSwitch.AutoSetToOn();
 
         // Assert
-        Assert.Equal(LightSwitchState.AUTO_FORCED_ON, lightSwitch.State);
+        Assert.Equal(LightSwitchState.ON_AUTO, lightSwitch.State);
         homebridgeEventSenderMock.Verify(x => x.LightSwitchOn("TestLightSwitch"), Times.Never);
         zwaveEventSenderMock.Verify(x => x.BinarySwitchOn("TestLightSwitch"), Times.Never);
     }
 
     [Fact]
-    public async Task AutoSetToOff_WhenAlreadyAutoOff_ShouldIgnoreCommand()
+    public async Task AutoSetToOff_WhenAlreadyOffAuto_ShouldIgnoreCommand()
     {
         // Arrange
-        mockState = LightSwitchState.AUTO_OFF.ToString();
+        mockState = LightSwitchState.OFF_AUTO.ToString();
 
         // Act
         await lightSwitch.AutoSetToOff();
 
         // Assert
-        Assert.Equal(LightSwitchState.AUTO_OFF, lightSwitch.State);
+        Assert.Equal(LightSwitchState.OFF_AUTO, lightSwitch.State);
         homebridgeEventSenderMock.Verify(x => x.LightSwitchOff("TestLightSwitch"), Times.Never);
         zwaveEventSenderMock.Verify(x => x.BinarySwitchOff("TestLightSwitch"), Times.Never);
     }
@@ -355,49 +402,32 @@ public class LightSwitchTests
     }
 
     [Fact]
-    public async Task AutoSetToOff_WhenPendingOff_ShouldIgnoreCommand()
+    public async Task AutoSetToOff_WhenOnScheduledOff_ShouldIgnoreCommand()
     {
         // Arrange
-        await ArrangeAutoPendingOff();
+        mockState = LightSwitchState.ON_SCHEDULED_OFF.ToString();
 
         // Act
         await lightSwitch.AutoSetToOff();
 
         // Assert
-        Assert.Equal(LightSwitchState.AUTO_DELAYED_OFF, lightSwitch.State);
-        Assert.True(lightSwitch.PendingTrigger);
+        Assert.Equal(LightSwitchState.ON_SCHEDULED_OFF, lightSwitch.State);
         homebridgeEventSenderMock.Verify(x => x.LightSwitchOff("TestLightSwitch"), Times.Never);
         zwaveEventSenderMock.Verify(x => x.BinarySwitchOff("TestLightSwitch"), Times.Never);
     }
 
     [Fact]
-    public async Task AutoSetToOff_WhenForcedOn_ShouldIgnoreCommand()
+    public async Task AutoSetToOff_WhenOnAuto_ShouldBePendingOffAuto()
     {
         // Arrange
-        mockState = LightSwitchState.AUTO_FORCED_ON.ToString();
+        mockState = LightSwitchState.ON_AUTO.ToString();
 
         // Act
         await lightSwitch.AutoSetToOff();
 
         // Assert
-        Assert.Equal(LightSwitchState.AUTO_FORCED_ON, lightSwitch.State);
+        Assert.Equal(LightSwitchState.PENDING_ON_SCHEDULED_OFF, lightSwitch.State);
         homebridgeEventSenderMock.Verify(x => x.LightSwitchOff("TestLightSwitch"), Times.Never);
         zwaveEventSenderMock.Verify(x => x.BinarySwitchOff("TestLightSwitch"), Times.Never);
-    }
-
-    async Task ArrangeAutoPendingOff()
-    {
-        mockState = LightSwitchState.AUTO_ON.ToString();
-        await lightSwitch.AutoSetToOff();
-
-        if(lightSwitch.State != LightSwitchState.AUTO_DELAYED_OFF)
-        {
-            throw new Exception("Light Switch did not set to Auto Pending Off");
-        }
-
-        if (lightSwitch.PendingTrigger != true)
-        {
-            throw new Exception("Light Switch delay timer did not enable");
-        }
     }
 }

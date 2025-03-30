@@ -1,4 +1,5 @@
 ﻿using Moq;
+using Quartz;
 using SimplySmart.Core.Abstractions;
 using SimplySmart.Core.Models;
 using SimplySmart.DeviceStates.Devices;
@@ -18,6 +19,7 @@ public class DimmerLightSwitchTests
     readonly Mock<IStateStore> stateStorageServiceMock;
     readonly Mock<IHomebridgeEventSender> homebridgeEventSenderMock;
     readonly Mock<IZwaveEventSender> zwaveEventSenderMock;
+    readonly Mock<ISchedulerFactory> schedulerFactoryMock;
     readonly DimmerLightSwitch dimmerSwitch;
 
     string mockState = LightSwitchState.OFF.ToString();
@@ -37,7 +39,14 @@ public class DimmerLightSwitchTests
 
         homebridgeEventSenderMock = new Mock<IHomebridgeEventSender>();
         zwaveEventSenderMock = new Mock<IZwaveEventSender>();
-        dimmerSwitch = new DimmerLightSwitch(stateStorageServiceMock.Object, homebridgeEventSenderMock.Object, zwaveEventSenderMock.Object, "TestDimmerSwitch", null);
+        schedulerFactoryMock = new Mock<ISchedulerFactory>();
+        dimmerSwitch = new DimmerLightSwitch(
+            stateStorageServiceMock.Object,
+            schedulerFactoryMock.Object,
+            homebridgeEventSenderMock.Object,
+            zwaveEventSenderMock.Object,
+            "TestDimmerSwitch"
+        );
         dimmerSwitch.Connect();
     }
 

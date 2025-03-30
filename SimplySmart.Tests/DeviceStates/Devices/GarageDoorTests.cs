@@ -3,15 +3,21 @@ using SimplySmart.Homebridge.Services;
 using SimplySmart.Zwave.Services;
 using SimplySmart.DeviceStates.Devices;
 using SimplySmart.Core.Abstractions;
+using Microsoft.Extensions.Logging;
+using Quartz;
+using SimplySmart.Frigate.Services;
 
 namespace SimplySmart.Tests.DeviceStates.Devices;
 
 public class GarageDoorTests
 {
-    private readonly Mock<IHomebridgeEventSender> homebridgeEventSenderMock;
-    private readonly Mock<IZwaveEventSender> zwaveEventSenderMock;
-    private readonly Mock<IStateStore> stateStorageServiceMock;
-    private readonly GarageDoor garageDoor;
+    readonly Mock<ILogger<IGarageDoor>> loggerMock;
+    readonly Mock<IHomebridgeEventSender> homebridgeEventSenderMock;
+    readonly Mock<IZwaveEventSender> zwaveEventSenderMock;
+    readonly Mock<IFrigateWebhookSender> frigateWebhookSenderMock;
+    readonly Mock<IStateStore> stateStorageServiceMock;
+    readonly Mock<ISchedulerFactory> schedulerFactoryMock;
+    readonly GarageDoor garageDoor;
 
     string mockState = GarageDoorState.CLOSED.ToString();
 
@@ -25,7 +31,18 @@ public class GarageDoorTests
 
         homebridgeEventSenderMock = new Mock<IHomebridgeEventSender>();
         zwaveEventSenderMock = new Mock<IZwaveEventSender>();
-        garageDoor = new GarageDoor(stateStorageServiceMock.Object, "TestGarageDoor", homebridgeEventSenderMock.Object, zwaveEventSenderMock.Object);
+        frigateWebhookSenderMock = new Mock<IFrigateWebhookSender>();
+        schedulerFactoryMock = new Mock<ISchedulerFactory>();
+        loggerMock = new Mock<ILogger<IGarageDoor>>();
+        garageDoor = new GarageDoor(
+            loggerMock.Object,
+            stateStorageServiceMock.Object,
+            schedulerFactoryMock.Object,
+            homebridgeEventSenderMock.Object,
+            zwaveEventSenderMock.Object,
+            frigateWebhookSenderMock.Object,
+            "TestGarageDoor"
+        );
         garageDoor.Connect();
     }
 

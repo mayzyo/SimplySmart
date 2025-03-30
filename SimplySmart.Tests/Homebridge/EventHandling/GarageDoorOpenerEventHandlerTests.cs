@@ -62,31 +62,4 @@ public class GarageDoorOpenerEventHandlerTests
         // Act & Assert
         await Assert.ThrowsAsync<Exception>(() => eventHandler.Handle(eventArgs));
     }
-
-    [Fact]
-    public void ConvertMessage_OpenMessage_ReturnsTrue()
-    {
-        // Act
-        var result = GarageDoorOpenerEventHandler.ConvertMessage("O");
-
-        // Assert
-        Assert.True(result);
-    }
-
-    [Fact]
-    public void ConvertMessage_CloseMessage_ReturnsFalse()
-    {
-        // Act
-        var result = GarageDoorOpenerEventHandler.ConvertMessage("C");
-
-        // Assert
-        Assert.False(result);
-    }
-
-    [Fact]
-    public void ConvertMessage_InvalidMessage_ThrowsException()
-    {
-        // Act & Assert
-        Assert.Throws<Exception>(() => GarageDoorOpenerEventHandler.ConvertMessage("X"));
-    }
 }

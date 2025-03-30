@@ -13,6 +13,6 @@ internal class LightSwitchPendingOffJob(ILightSwitchService lightSwitchService) 
     public async Task Execute(IJobExecutionContext context)
     {
         var name = context.JobDetail.Key.Name.Replace("_PendingOffJob", "");
-        await (lightSwitchService[name]?.CompletePendingOff() ?? Task.CompletedTask);
+        await (lightSwitchService[name]?.CompleteScheduledOff() ?? Task.CompletedTask);
     }
 }
